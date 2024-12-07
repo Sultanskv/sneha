@@ -1,0 +1,153 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom styles for the Dashboard */
+    .dashboard-title {
+        color: #4caf50;
+        font-weight: bold;
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .table-custom {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+
+    .table-custom th {
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .table-custom td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 12px; /* Increased padding for better readability */
+    }
+
+    .table-custom th, .table-custom td {
+        border: none; /* Remove borders from both table headers and cells */
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: #f1f1f1;
+        transition: all 0.3s ease;
+    }
+
+    /* Profile Picture */
+    .profile-picture {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    /* Active Checkbox Styling */
+    .active-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .active-checkbox:checked {
+        background-color: #28a745;
+        border: 2px solid #28a745;
+    }
+
+    /* Buttons */
+    .btn-import {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-import:hover {
+        background-color: #0056b3;
+        color: #fff;
+    }
+
+    .btn-import:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .table-custom th, .table-custom td {
+            font-size: 14px;
+        }
+
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+        }
+
+        .dashboard-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<div class="container mt-5">
+    <!-- Excel Import Button and Dashboard Title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="dashboard-title">Customers Dashboard</h3>
+        <a href="" class="btn btn-import">Import from Excel</a>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="table-responsive">
+        <form id="update-form" method="post" action="{% url 'update_active_status' %}">
+            {% csrf_token %}
+            <table class="table table-striped table-bordered table-custom">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>customer</th>
+                        <th>product</th>
+                        <th>amount</th>
+                        <th>sale_date</th>
+                        <th>created_at</th>
+                        <th>created_by</th>
+                   
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in sales %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                      
+                        <td>{{ customer.customer }}</td>
+                        <td>{{ customer.product }}</td>
+                        <td>{{ customer.amount }}</td>
+                        <td>{{ customer.sale_date|date:"d M Y" }}</td>
+                        <td>{{ customer.created_at|date:"d M Y H:i" }}</td>
+                        <td>{{ customer.created_by }}</td>
+                       
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="14" class="text-center">No customers found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}

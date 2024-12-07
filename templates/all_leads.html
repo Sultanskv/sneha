@@ -1,0 +1,242 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .dashboard-title {
+        font-size: 1.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-outline-primary {
+        color: #4e73df;
+        border-color: #4e73df;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #4e73df;
+        color: white;
+    }
+
+    .btn-group a {
+        display: inline-flex;
+        align-items: center;
+        font-weight: bold;
+        padding: 10px 20px;
+        text-transform: capitalize;
+    }
+
+    .btn-group .me-2 {
+        margin-right: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .btn-group {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-group a {
+            width: 100%;
+            text-align: center;
+        }
+    }
+    .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination a, .pagination span {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .pagination .current {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+</style>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+     
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <!-- Dashboard Title -->
+                <h3 class="dashboard-title text-primary font-weight-bold mb-0">Customers Dashboard</h3>
+                <form method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="filter" class="form-control" placeholder="Search by name" value="{{ filter_query }}">
+                        <button type="submit" class="btn btn-outline-primary">Filter</button>
+                    </div>
+                </form>
+                <!-- Button Group -->
+                <div class="btn-group">
+                     <!-- Filter Form -->
+                
+                    <!-- Import Button 1 -->
+                    <a href="{% url 'upload_customers' %}" class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center">
+                        <i class="fas fa-file-import me-2"></i>
+                        Upload from Excel
+                    </a>
+            
+                    <!-- Import Button 2 -->
+                    <a href="{% url 'export_leads_to_excel' %}" class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center ms-2">
+                        <i class="fas fa-file-import me-2"></i>
+                        Import from Excel
+                    </a>
+                </div>
+            </div>
+            <div class="card shadow-lg rounded-lg border-0">
+                <div class="card-header text-white" style="background: linear-gradient(45deg, #4e73df, #1cc88a);">
+                    <h4 class="text-center mb-0">Manage Customers</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover text-center align-middle">
+                            <thead style="background: #1cc88a; color: white;">
+                                <tr>
+                                    <th>S.no</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Active</th>
+                                    <th>Status</th>
+                             
+                    
+                                    <th>Source</th>
+                                 
+                                
+                                    <th>Facebook ID</th>
+                                    <th>Phone Number</th>
+                                    <th>Date Created</th>
+                                    <th>Date Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in leads %}
+                                <tr>
+                                    <!-- <td>{{ customer.id }}</td> -->
+                                    <td>{{ leads.start_index|add:forloop.counter0 }}</td>
+                                    <td class="text-dark font-weight-bold">{{ customer.name }}</td>
+                                    <td class="text-muted">{{ customer.email }}</td>
+                                    <td class="text-dark">{{ customer.phone }}</td>
+                                    <td>
+                                        <!-- Active toggle -->
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input type="checkbox" 
+                                                   class="form-check-input active-toggle" 
+                                                   data-id="{{ customer.id }}" 
+                                                   {% if customer.active %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <!-- Status dropdown -->
+                                        <select class="status-select form-select bg-light border-success" 
+                                                data-id="{{ customer.id }}">
+                                            {% for key, value in customer.status_CHOICES %}
+                                            <option value="{{ key }}" 
+                                                {% if key == customer.status %}selected{% endif %}>
+                                                {{ value }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                               
+                                    <td>{{ customer.source }}</td>
+                                    <td>{{ customer.facebook_id }}</td>
+                                    <td>{{ customer.phone_number }}</td>
+                                    <td>{{ customer.date_created|date:"d M Y H:i" }}</td>
+                                    <td>{{ customer.date_updated|date:"d M Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="pagination">
+                    {% if leads.has_previous %}
+                        <a href="?page=1&q={{ filter_query }}">First</a>
+                        <a href="?page={{ leads.previous_page_number }}&q={{ filter_query }}">Previous</a>
+                    {% endif %}
+                
+                    {% for num in leads.paginator.page_range %}
+                        {% if leads.number == num %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > leads.number|add:-3 and num < leads.number|add:3 %}
+                            <a href="?page={{ num }}&q={{ filter_query }}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                
+                    {% if leads.has_next %}
+                        <a href="?page={{ leads.next_page_number }}&q={{ filter_query }}">Next</a>
+                        <a href="?page={{ leads.paginator.num_pages }}&q={{ filter_query }}">Last</a>
+                    {% endif %}
+                </div>
+                
+            
+        </div>
+    </div>
+</div>
+
+<!-- Script for handling AJAX requests -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Handle Active Toggle
+    $('.active-toggle').on('change', function () {
+        const customerId = $(this).data('id');
+        const isActive = $(this).is(':checked');
+        $.ajax({
+            url: "{% url 'update_active_status' %}",
+            method: "POST",
+            data: {
+                customer_id: customerId,
+                field: 'active',
+                value: isActive,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                alert(response.message);
+            }
+        });
+    });
+
+    // Handle Status Dropdown Change
+    $('.status-select').on('change', function () {
+        const customerId = $(this).data('id');
+        const newStatus = $(this).val();
+        $.ajax({
+            url: "{% url 'update_active_status' %}",
+            method: "POST",
+            data: {
+                customer_id: customerId,
+                field: 'status',
+                value: newStatus,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                alert(response.message);
+            }
+        });
+    });
+</script>
+{% endblock %}

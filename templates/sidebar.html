@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Prospects</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <style>
+        .sidebar {
+            background-color: #2b3e50;
+            height: 100vh;
+            color: white;
+            padding: 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: white;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #ffb400;
+        }
+
+      
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h5 class="text-center">CRM</h5>
+        <nav class="nav flex-column">
+            <!-- CRM Dashboard -->
+            <a class="nav-link" href="{% url 'dashboard' %}">
+                <i class="bi bi-speedometer2"></i> CRM Dashboard
+            </a>
+            <a class="nav-link" href="{% url 'employee_list' %}">
+                <i class="bi bi-people"></i> All Employee
+            </a>
+            
+            <!-- All Leads -->
+            <a class="nav-link" href="{% url 'all_leads' %}">
+                <i class="bi bi-person-lines-fill"></i> All Leads
+            </a>
+            
+            <!-- Add Leads -->
+            <a class="nav-link" href="{% url 'add_customer' %}">
+                <i class="bi bi-person-plus"></i> Add Leads
+            </a>
+
+            <a class="nav-link" href="{% url 'create_lead' %}">
+                <i class="bi bi-person-plus"></i> Create Lead
+            </a>
+            
+            <!-- All Sale -->
+            <a class="nav-link" href="{% url 'all_sale' %}">
+                <i class="bi bi-cart-check"></i> All Sale
+            </a>
+            <!-- Add Sale -->
+            <a class="nav-link" href="{% url 'add_sale' %}">
+                <i class="bi bi-cart-plus"></i> Add Sale
+            </a>
+            <!-- Import Facebook Leads -->
+            <!-- <a class="nav-link" href="{% url 'social:begin' 'facebook' %}">
+                <i class="bi bi-facebook"></i> Import Facebook Leads
+            </a>
+
+            <a class="nav-link" href="{% url 'facebook_login' %}">
+                <i class="bi bi-facebook"></i> Import Facebook Leads 2
+            </a> -->
+            
+            {% if 'super_admin_id' in request.session  %}
+             
+                <a class="nav-link" href="{% url 'social:begin' 'facebook' %}">
+                    <i class="bi bi-facebook"></i> Import Facebook Leads
+                </a>
+            {% elif 'sub_admin_id' in request.session %}
+                <!-- Sub Admin ke liye URL -->
+                <a class="nav-link" href="{% url 'facebook_login2' %}">
+                    <i class="bi bi-facebook"></i> Import Facebook Leads subadmin
+                </a>
+            
+            {% endif %}
+
+    
+            <hr>
+            <!-- Need Help? -->
+            <a class="nav-link" href="#">
+                <i class="bi bi-question-circle"></i> Need help?
+            </a>
+            <!-- Privacy Policy -->
+            <a class="nav-link" href="{% url 'privacy_policy' %}">
+                <i class="bi bi-shield-lock"></i> Privacy Policy
+            </a>
+            <!-- Terms of Service -->
+            <a class="nav-link" href="{% url 'terms_of_service' %}">
+                <i class="bi bi-file-earmark-text"></i> Terms of Service
+            </a>
+            <!-- Logout -->
+            <a class="nav-link" href="{% url 'suparadmin_logout' %}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </nav>
+    </div>
+    
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

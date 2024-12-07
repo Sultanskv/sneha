@@ -1,0 +1,116 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Sales Prospects</h1>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">Travel History</button>
+            <button type="button" class="btn btn-outline-secondary">Active</button>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col">
+            <div class="card bg-warning text-white">
+                <div class="card-header">
+                    All Leads 
+                </div>
+                <div class="card-body">
+                    <p>Total : {{total_lead}}</p>
+                    <p>Newleads_today : {{Newleads_today}}</p>
+                 
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card bg-warning text-dark">
+                <div class="card-header">
+                    Tage Leads
+                </div>
+                <div class="card-body">
+                    <p>untage_lead : {{untage_lead}}</p>
+                    <p>tage_lead : {{tage_lead}}</p>
+                  
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card bg-secondary text-white">
+                <div class="card-header">
+                    New Leads
+                </div>
+                <div class="card-body">
+                    
+                    <p>last_week : {{last_week}}</p>
+                    <p>this_month : {{this_month}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card bg-info text-white">
+                <div class="card-header">
+                    source Leads
+                </div>
+                <div class="card-body">
+                    <p>source_self : {{source_self}}</p>
+                    <p>source_Facebook : {{source_fb}}</p>
+                  
+                </div>
+            </div>
+        </div>
+    
+    </div>
+
+    <!-- <div class="text-center mb-4">
+        <button type="button" class="btn btn-warning">+ Enter Prospect</button>
+        <button type="button" class="btn btn-success">Change Stages</button>
+    </div> -->
+
+<!--     
+    <div class="container mt-4">
+       
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h3>Customers</h3>
+                <ul class="list-group">
+                    {% for customer in customers %}
+                    <li class="list-group-item">
+                        {{ customer.name }} - {{ customer.email }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="col-md-6">
+                <h3>Sales</h3>
+                <ul class="list-group">
+                    {% for sale in sales %}
+                    <li class="list-group-item">
+                        {{ sale.product }} - {{ sale.amount }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div> -->
+
+    <div class="help-materials">
+        <h2>Help Materials</h2>
+        <button type="button" class="btn btn-outline-primary">Training Video Leads / Prospects</button>
+        <button type="button" class="btn btn-outline-primary">Enter Prospect Manually</button>
+        <button type="button" class="btn btn-outline-primary">How to create or add a prospect?</button>
+        <button type="button" class="btn btn-outline-primary">How to assign Prospects to Executive?</button>
+        <button type="button" class="btn btn-outline-primary">How to Convert a Lead to a Prospect?</button>
+        <button type="button" class="btn btn-outline-primary">How to add a Connection / New Business Contact?</button>
+        <button type="button" class="btn btn-outline-primary">Need Help</button>
+    </div>
+
+
+{% endblock %}
