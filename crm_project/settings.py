@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,8 @@ SECRET_KEY = 'django-insecure-d$9jy)3n3r_f#r)c(y3$xrw!+c17j$m6lh52gvufvz*fkit%=*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['192.168.1.142', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.56.1','localhost']
 
 
 
@@ -54,7 +56,13 @@ INSTALLED_APPS = [
     'crm',
     'social_django',
     'Employee',
+    'head',
+    'django_celery_beat',
+    'channels',
+    
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -65,6 +73,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    # 'head.middleware.DebugMiddleware',
+    'crm.middleware.CloseDBConnectionMiddleware',
 ]
 
 ROOT_URLCONF = 'crm_project.urls'
@@ -72,7 +82,8 @@ ROOT_URLCONF = 'crm_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, "templates"],
+        # 'DIRS': [BASE_DIR, "templates"],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -94,9 +105,44 @@ WSGI_APPLICATION = 'crm_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
+        'OPTIONS': {
+            'timeout': 20,  # Increase the timeout in seconds
+        },
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'wavereco',
+#         'USER': 'root',
+#         'PASSWORD':'root',
+#         'HOST': '127.0.0.1',
+#         'PORT': '3306',
+#     }
+# }
+
+
+# import pymysql
+
+# Replace MySQLdb with PyMySQL
+# pymysql.install_as_MySQLdb()
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'metaleads',
+#         'USER': 'root',
+#         'PASSWORD':'fNV3tpijD6;',  # Use the appropriate password for your MySQL root user
+#         'HOST': '127.0.0.1',
+#         'PORT': '4306',
+#         'OPTIONS': {
+#             'charset': 'utf8mb4',
+#         },
+#     }
+# }
+
 
 # import pymysql
 
@@ -164,7 +210,7 @@ if DEBUG:
     STATIC_URL = 'static/'
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     STATICFILES_DIRS = [
-        BASE_DIR / "static",
+        os.path.join(BASE_DIR, "static"),
     ]
 
 else:
@@ -190,8 +236,8 @@ AUTHENTICATION_BACKENDS = (
 )
 
 
-SOCIAL_AUTH_FACEBOOK_KEY = '508236178875910' # Akhshay
-SOCIAL_AUTH_FACEBOOK_SECRET = '8171cb47f415b4b2defd1b4f0e72b8df' # Akhshay
+# SOCIAL_AUTH_FACEBOOK_KEY = '508236178875910' # Akhshay
+# SOCIAL_AUTH_FACEBOOK_SECRET = '8171cb47f415b4b2defd1b4f0e72b8df' # Akhshay
 # SOCIAL_AUTH_FACEBOOK_KEY = '303082802867094'  # Your Facebook App ID Ranjeet acount
 # SOCIAL_AUTH_FACEBOOK_SECRET = 'dc9048207507c100e8bd58eede5461fe'  # Your Facebook App Secret Ranjeet acount
 
@@ -214,7 +260,7 @@ SOCIAL_AUTH_FACEBOOK_SCOPE = [
 ]
 
 # Redirect URI (make sure this matches your Facebook Developer Console settings)
-SOCIAL_AUTH_FACEBOOK_REDIRECT_URI = 'https://crm.joytilingtechnology.com/login/facebook/complete/facebook/'
+# SOCIAL_AUTH_FACEBOOK_REDIRECT_URI = 'https://crm.joytilingtechnology.com/login/facebook/complete/facebook/'
 
 # https://crm.joytilingtechnology.com/complete/facebook/
 # Extra data to store from Facebook login
@@ -245,3 +291,37 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ittechnology1may2023@gmail.com'  # Your email address
 EMAIL_HOST_PASSWORD = 'euva beex nuyf edqa'      # Your email password or app-specific password
 
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Redis database 1
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'example'
+    }
+}
+
+# Celery settings
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'  # Use Redis as the message broker
+CELERY_ACCEPT_CONTENT = ['json']  # Accept only JSON-serialized tasks
+CELERY_TASK_SERIALIZER = 'json'   # Use JSON to serialize tasks
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'  # Result BackendCELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_ALWAYS_EAGER = False  
+CELERY_RESULT_EXTENDED = True
+
+ASGI_APPLICATION = 'crm_project.asgi.application'
+
+# Redis for Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}

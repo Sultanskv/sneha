@@ -1,5 +1,5 @@
 from django import forms
-from .models import Customer, Sale
+from .models import Customer
 
 
 class CustomerForm(forms.ModelForm):
@@ -30,7 +30,7 @@ class LeadsForm(forms.ModelForm):
         }
 # forms.py
 from django import forms
-from .models import Sale
+# from .models import Sale
 
 class SaleForm(forms.ModelForm):
     # Customizing the sale date field to include a date picker widget
@@ -40,19 +40,5 @@ class SaleForm(forms.ModelForm):
         )
     )
 
-    class Meta:
-        model = Sale
-        fields = ['customer', 'product', 'amount', 'sale_date', 'created_by']
-        widgets = {
-            'customer': forms.Select(attrs={'class': 'form-control'}),
-            'product': forms.TextInput(attrs={'class': 'form-control'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
-            'created_by': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-        labels = {
-            'customer': 'Customer',
-            'product': 'Product',
-            'amount': 'Amount',
-            'sale_date': 'Sale Date',
-            'created_by': 'Created By',
-        }
+
+

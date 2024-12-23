@@ -1,24 +1,40 @@
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 import uuid
+# from django.db import models
+# from crm.models import Page  # Import the Page model
+# from django.db import models
+# from django.contrib.auth.models import User
+
+# from django.contrib.auth.models import AbstractUser, Group, Permission
+# from django.conf import settings
+# from django.utils import timezone
+
 
 class super_admin(models.Model):
+
+    # ROLE_CHOICES = [
+    #     ('subadmin', 'Sub-Admin'),
+    #     ('admin', 'Admin'),
+    # ]
+
+    # role = models.CharField(choices=ROLE_CHOICES, default='subadmin', max_length=20)
+    allowed_pages = models.ManyToManyField('Page', blank=True, related_name='allowed_superadmins')
     super_admin_id = models.CharField(max_length=8, unique=True, blank=True, default=uuid.uuid4().hex[:8])
-    sub_admin = models.BooleanField(default=True,blank=True, null=True)
+    sub_admin = models.BooleanField(default=True, blank=True, null=True)
     name = models.CharField(max_length=100)
     email = models.EmailField()
-    password = models.CharField(max_length=50,blank=True, null=True)
+    password = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=15)
-    address = models.TextField() 
-   
+    address = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    facebook_app_id = models.CharField(max_length=555, null=True, blank=True)
-    facebook_app_secret = models.CharField(max_length=555, null=True, blank=True)
-    
+    # Use a string reference instead of direct import
+    # allowed_pages = models.ManyToManyField('crm.Page', blank=True, related_name='allowed_subadmins')
 
     def __str__(self):
-        return self.super_admin_id
+        return f"{self.name} ({self.super_admin_id})"
+
 
 
 class Customer(models.Model):
@@ -92,22 +108,11 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
-class Sale(models.Model):
-    admin_id = models.CharField(max_length=100, blank=True, null=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    product = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    sale_date = models.DateField()
-    created_by = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True,blank=True,null=True)
 
-    def __str__(self):
-        return f"{self.product} - {self.amount}"
 
 
 # models.py
-from django.db import models
-from django.contrib.auth.models import User
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(super_admin, on_delete=models.CASCADE, related_name='profile')
@@ -118,3 +123,47 @@ class UserProfile(models.Model):
         return f"{self.facebook_user_id}"
 
 
+
+class Page(models.Model):
+    page_id = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=255, blank=True, null=True)
+    access_token = models.TextField(default='default_token')
+    visible_to = models.ManyToManyField(super_admin, related_name="pages_visible", blank=True)
+    
+    def __str__(self):
+        return self.name
+
+    
+class Form(models.Model):
+    form_id = models.CharField(max_length=255, unique=True)
+    page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="forms")
+    name = models.CharField(max_length=255)
+    status = models.CharField(max_length=50, blank=True, null=True, default='INACTIVE')
+    def __str__(self):
+          return self.name
+
+from django.contrib.auth.models import User
+
+class Lead(models.Model):
+    STATUS_CHOICES = [
+        ("Not Assigned", "Not Assigned"),
+        ("Assigned", "Assigned"),
+    ]
+    lead_id = models.CharField(max_length=255, unique=True,db_index=True)
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name="leads", null=True)
+    full_name = models.CharField(max_length=255, default='Unknown')
+    email = models.EmailField(blank=True, null=True)
+    phone_number = models.CharField(max_length=50, blank=True, null=True)
+    # created_time = models.DateTimeField(blank=True, null=True)
+    active = models.BooleanField(default=False)
+    assigned_to = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="leads")
+    created_time = models.DateTimeField(auto_now_add=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    
+    def __str__(self):
+        return self.full_name
+    
+    class Meta:
+        ordering = ['-created_time']  # Default sorting: latest first
+        db_table = "crm_lead"

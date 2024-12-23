@@ -1,0 +1,31 @@
+{% extends 'head/adminbase.html' %}
+
+{% block title %}Add Customer{% endblock %}
+
+{% block sidebar %}
+    {% include 'head/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads</title>
+</head>
+<body>
+    <h1>Leads for Page: {{ page.name }}</h1>
+    {% if leads %}
+        <ul>
+            {% for lead in leads %}
+                <li>{{ lead.name }} - {{ lead.email }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No leads found for this page.</p>
+    {% endif %}
+</body>
+</html>
+{% endblock %}

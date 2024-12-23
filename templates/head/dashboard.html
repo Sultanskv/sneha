@@ -1,0 +1,109 @@
+{% extends 'head/adminbase.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'head/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Card Styling */
+    .card {
+        background: linear-gradient(135deg, #232323, #1a1a1a); /* Black gradient */
+        color: #f5f5f5; /* Light text */
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.8); /* 3D shadow effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px); /* Lift on hover */
+        box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.9); /* Stronger shadow on hover */
+    }
+
+    /* Card Header Styling */
+    .card-header {
+        background: linear-gradient(135deg, #2e2e2e, #3a3a3a); /* Slightly lighter gradient for header */
+        color: #b3b3b3; /* Light grey text */
+        font-weight: bold;
+        border-bottom: none;
+        text-shadow: 0px 3px 5px rgba(0, 0, 0, 0.8); /* Subtle shadow effect */
+    }
+
+    /* Card Body Styling */
+    .card-body p {
+        color: #d1d1d1; /* Slightly brighter grey for text */
+        font-weight: bold;
+    }
+
+    /* Custom Color Backgrounds for Specific Cards */
+    .bg-black-light {
+        background: linear-gradient(135deg, #2a2a2a, #1e1e1e); /* Lighter black */
+    }
+
+    .bg-black-dark {
+        background: linear-gradient(135deg, #1e1e1e, #121212); /* Darker black */
+    }
+
+    .bg-black-grey {
+        background: linear-gradient(135deg, #333, #222); /* Greyish black */
+    }
+
+    .text-white {
+        color: #f5f5f5 !important; /* Consistent light text */
+    }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-4" style="background: linear-gradient(135deg, #1a1a1a, #121212); padding: 20px; border-radius: 10px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.6);">
+    <h1 style="color: #d1d1d1; text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8); font-weight: bold;">Welcome to Admin Dashboard</h1>
+</div>
+
+
+<div class="row mb-3">
+    <div class="col">
+        <div class="card bg-black-light">
+            <div class="card-header">
+                All Leads 
+            </div>
+            <div class="card-body">
+                <p>Total : {{total_lead}}</p>
+                <p>New Leads Today : {{Newleads_today}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-black-dark">
+            <div class="card-header">
+                Tagged Leads
+            </div>
+            <div class="card-body">
+                <p>Untagged Leads : {{untage_lead}}</p>
+                <p>Tagged Leads : {{tage_lead}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-black-grey">
+            <div class="card-header">
+                New Leads
+            </div>
+            <div class="card-body">
+                <p>Last Week : {{last_week}}</p>
+                <p>This Month : {{this_month}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-black-light">
+            <div class="card-header">
+                Source Leads
+            </div>
+            <div class="card-body">
+                <p>Source Self : {{source_self}}</p>
+                <p>Source Facebook : {{source_fb}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

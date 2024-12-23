@@ -4,44 +4,89 @@
 
 {% block content %}
 <style>
-     .pagination {
-            text-align: center;
-            margin-top: 20px;
-        }
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+    }
 
-        .pagination a, .pagination span {
-            display: inline-block;
-            padding: 10px 15px;
-            margin: 0 5px;
-            border: 1px solid #ddd;
-            color: #3498db;
-            text-decoration: none;
-        }
+    .pagination a, .pagination span {
+        display: inline-block;
+        padding: 10px 15px;
+        margin: 0 5px;
+        border: 1px solid #444; /* Dark border */
+        color: #b3b3b3; /* Grey text */
+        text-decoration: none;
+    }
 
-        .pagination .current {
-            background-color: #3498db;
-            color: #fff;
-            border-color: #3498db;
-        }
+    .pagination .current {
+        background-color: #555; /* Slightly lighter black */
+        color: #fff; /* White text */
+        border-color: #555;
+    }
+
+    .dashboard-title {
+        color: #f5f5f5; /* Light grey text */
+    }
+
+    .card {
+        background-color: #1e1e1e; /* Dark card background */
+        color: #f5f5f5; /* Light text */
+    }
+
+    .card-header {
+        background: linear-gradient(45deg, #333, #444); /* Dark gradient */
+        color: #f5f5f5; /* Light text */
+    }
+
+    .table {
+        color: #ddd; /* Light text for the table */
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #444; /* Darker hover effect */
+    }
+
+    .table thead {
+        background-color: #333; /* Dark header */
+        color: #fff; /* White text */
+    }
+
+    .form-check-input:checked {
+        background-color: #555; /* Darker toggle */
+        border-color: #777; /* Slightly lighter border */
+    }
+
+    .status-select {
+        background-color: #333; /* Dark dropdown */
+        color: #ddd; /* Light text */
+        border: 1px solid #555; /* Dark border */
+    }
+
+    .status-select option {
+        background-color: #222; /* Darker dropdown options */
+        color: #ccc; /* Light text */
+    }
+
+    body {
+        background-color: #121212; /* Dark background for the page */
+        color: #f5f5f5; /* Light text for the overall content */
+    }
 </style>
+
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
-     
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="dashboard-title text-primary font-weight-bold">Customers Dashboard</h3>
-                <a href="{% url 'export_leads_to_excel_emp' %}" class="btn btn-primary rounded-pill shadow-sm">
-                    <i class="fas fa-file-import"></i> Import from Excel
-                </a>
+                <h3 class="dashboard-title font-weight-bold">Customers Dashboard</h3>
             </div>
             <div class="card shadow-lg rounded-lg border-0">
-                <div class="card-header text-white" style="background: linear-gradient(45deg, #4e73df, #1cc88a);">
+                <div class="card-header">
                     <h4 class="text-center mb-0">Manage Customers</h4>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover text-center align-middle">
-                            <thead style="background: #1cc88a; color: white;">
+                            <thead>
                                 <tr>
                                     <th>S.no</th>
                                     <th>Name</th>
@@ -49,12 +94,7 @@
                                     <th>Phone</th>
                                     <th>Active</th>
                                     <th>Status</th>
-                             
-                    
                                     <th>Source</th>
-                                 
-                                
-                                    <th>Facebook ID</th>
                                     <th>Phone Number</th>
                                     <th>Date Created</th>
                                     <th>Date Updated</th>
@@ -64,11 +104,10 @@
                                 {% for customer in leads %}
                                 <tr>
                                     <td>{{ leads.start_index|add:forloop.counter0 }}</td>
-                                    <td class="text-dark font-weight-bold">{{ customer.name }}</td>
+                                    <td class="text-light font-weight-bold">{{ customer.name }}</td>
                                     <td class="text-muted">{{ customer.email }}</td>
-                                    <td class="text-dark">{{ customer.phone }}</td>
+                                    <td class="text-light">{{ customer.phone }}</td>
                                     <td>
-                                        <!-- Active toggle -->
                                         <div class="form-check form-switch d-flex justify-content-center">
                                             <input type="checkbox" 
                                                    class="form-check-input active-toggle" 
@@ -77,8 +116,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <!-- Status dropdown -->
-                                        <select class="status-select form-select bg-light border-success" 
+                                        <select class="status-select form-select" 
                                                 data-id="{{ customer.id }}">
                                             {% for key, value in customer.status_CHOICES %}
                                             <option value="{{ key }}" 
@@ -88,9 +126,7 @@
                                             {% endfor %}
                                         </select>
                                     </td>
-                               
                                     <td>{{ customer.source }}</td>
-                                    <td>{{ customer.facebook_id }}</td>
                                     <td>{{ customer.phone_number }}</td>
                                     <td>{{ customer.date_created|date:"d M Y H:i" }}</td>
                                     <td>{{ customer.date_updated|date:"d M Y H:i" }}</td>
@@ -123,6 +159,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Script for handling AJAX requests -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -166,3 +203,9 @@
     });
 </script>
 {% endblock %}
+
+
+
+ {% comment %} <a href="{% url 'export_leads_to_excel_emp' %}" class="btn btn-primary rounded-pill shadow-sm">
+                    <i class="fas fa-file-import"></i> Fetch Leads
+                </a> {% endcomment %}

@@ -94,10 +94,10 @@
                      <!-- Filter Form -->
                 
                     <!-- Import Button 1 -->
-                    <a href="{% url 'upload_customers' %}" class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center">
+                    {% comment %} <a href="{% url 'upload_customers' %}" class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center">
                         <i class="fas fa-file-import me-2"></i>
                         Upload from Excel
-                    </a>
+                    </a> {% endcomment %}
             
                     <!-- Import Button 2 -->
                     <a href="{% url 'export_leads_to_excel' %}" class="btn btn-outline-primary rounded-pill shadow-sm d-flex align-items-center ms-2">

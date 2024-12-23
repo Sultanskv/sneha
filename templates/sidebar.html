@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Prospects</title>
+    <title>Welcome to Subadmin dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
@@ -33,7 +33,8 @@
 </head>
 <body>
     <div class="sidebar">
-        <h5 class="text-center">CRM</h5>
+        <h5 class="text-center">Welcome, Subadmin dashboard {{ admin_name }}!</h5>
+        <p class="text-center small">CRM</p>
         <nav class="nav flex-column">
             <!-- CRM Dashboard -->
             <a class="nav-link" href="{% url 'dashboard' %}">
@@ -50,44 +51,16 @@
             
             <!-- Add Leads -->
             <a class="nav-link" href="{% url 'add_customer' %}">
-                <i class="bi bi-person-plus"></i> Add Leads
+                <i class="bi bi-person-plus"></i> All Pools
             </a>
-
-            <a class="nav-link" href="{% url 'create_lead' %}">
-                <i class="bi bi-person-plus"></i> Create Lead
+            <a class="nav-link" href="#">
+                <i class="bi bi-file-earmark-bar-graph"></i> User Reports
+            </a>
+            <a class="nav-link" href="#">
+                <i class="bi bi-envelope"></i> Mail Box
             </a>
             
-            <!-- All Sale -->
-            <a class="nav-link" href="{% url 'all_sale' %}">
-                <i class="bi bi-cart-check"></i> All Sale
-            </a>
-            <!-- Add Sale -->
-            <a class="nav-link" href="{% url 'add_sale' %}">
-                <i class="bi bi-cart-plus"></i> Add Sale
-            </a>
-            <!-- Import Facebook Leads -->
-            <!-- <a class="nav-link" href="{% url 'social:begin' 'facebook' %}">
-                <i class="bi bi-facebook"></i> Import Facebook Leads
-            </a>
-
-            <a class="nav-link" href="{% url 'facebook_login' %}">
-                <i class="bi bi-facebook"></i> Import Facebook Leads 2
-            </a> -->
-            
-            {% if 'super_admin_id' in request.session  %}
-             
-                <a class="nav-link" href="{% url 'social:begin' 'facebook' %}">
-                    <i class="bi bi-facebook"></i> Import Facebook Leads
-                </a>
-            {% elif 'sub_admin_id' in request.session %}
-                <!-- Sub Admin ke liye URL -->
-                <a class="nav-link" href="{% url 'facebook_login2' %}">
-                    <i class="bi bi-facebook"></i> Import Facebook Leads subadmin
-                </a>
-            
-            {% endif %}
-
-    
+        
             <hr>
             <!-- Need Help? -->
             <a class="nav-link" href="#">

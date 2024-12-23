@@ -7,110 +7,241 @@
 {% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Sales Prospects</h1>
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-primary">Travel History</button>
-            <button type="button" class="btn btn-outline-secondary">Active</button>
-        </div>
-    </div>
+<style>
+    /* AI Avatar Animation */
+    @keyframes waveHand {
+        0% { transform: rotate(0deg); }
+        25% { transform: rotate(-10deg); }
+        50% { transform: rotate(0deg); }
+        75% { transform: rotate(10deg); }
+        100% { transform: rotate(0deg); }
+    }
 
-    <div class="row mb-3">
-        <div class="col">
-            <div class="card bg-warning text-white">
-                <div class="card-header">
-                    All Leads 
-                </div>
-                <div class="card-body">
-                    <p>Total : {{total_lead}}</p>
-                    <p>Newleads_today : {{Newleads_today}}</p>
-                 
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card bg-warning text-dark">
-                <div class="card-header">
-                    Tage Leads
-                </div>
-                <div class="card-body">
-                    <p>untage_lead : {{untage_lead}}</p>
-                    <p>tage_lead : {{tage_lead}}</p>
-                  
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card bg-secondary text-white">
-                <div class="card-header">
-                    New Leads
-                </div>
-                <div class="card-body">
-                    
-                    <p>last_week : {{last_week}}</p>
-                    <p>this_month : {{this_month}}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card bg-info text-white">
-                <div class="card-header">
-                    source Leads
-                </div>
-                <div class="card-body">
-                    <p>source_self : {{source_self}}</p>
-                    <p>source_Facebook : {{source_fb}}</p>
-                  
-                </div>
-            </div>
-        </div>
+    /* Styling for AI Container */
+    #ai-welcome-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a1a, #121212);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.7);
+        margin-bottom: 20px;
+    }
+
+    #ai-avatar {
+        width: 150px;
+        height: auto;
+        margin-bottom: 10px;
+        animation: waveHand 2s ease-in-out infinite;
+    }
+
+    #welcome-message {
+        color: #d1d1d1;
+        font-weight: bold;
+        font-size: 1.8rem;
+        text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8);
+    }
+
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+    .notification-popup {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        border-radius: 5px;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        display: none;
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(-10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    /* Card Styling */
+    .card {
+        background: linear-gradient(135deg, #232323, #1a1a1a); /* Black gradient */
+        color: #f5f5f5; /* Light text */
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.8); /* 3D shadow effect */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px); /* Lift on hover */
+        box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.9); /* Stronger shadow on hover */
+    }
+
+    /* Card Header Styling */
+    .card-header {
+        background: linear-gradient(135deg, #2e2e2e, #3a3a3a); /* Slightly lighter gradient for header */
+        color: #b3b3b3; /* Light grey text */
+        font-weight: bold;
+        border-bottom: none;
+        text-shadow: 0px 3px 5px rgba(0, 0, 0, 0.8); /* Subtle shadow effect */
+    }
+
+    /* Card Body Styling */
+    .card-body p {
+        color: #d1d1d1; /* Slightly brighter grey for text */
+        font-weight: bold;
+    }
+
+    /* Custom Color Backgrounds for Specific Cards */
+    .bg-black-light {
+        background: linear-gradient(135deg, #2a2a2a, #1e1e1e); /* Lighter black */
+    }
+
+    .bg-black-dark {
+        background: linear-gradient(135deg, #1e1e1e, #121212); /* Darker black */
+    }
+
+    .bg-black-grey {
+        background: linear-gradient(135deg, #333, #222); /* Greyish black */
+    }
+
+    .text-white {
+        color: #f5f5f5 !important; /* Consistent light text */
+    }
+    // Connect to WebSocket
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/leads/");
+
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const notificationArea = document.getElementById("notification-area");
+        
+        // Display notification
+        const notification = document.createElement("div");
+        notification.innerText = data.message;
+        notification.className = "notification";
+        notificationArea.appendChild(notification);
+
+        // Play sound
+        const audio = new Audio("/static/sound/notification.mp3");
+        audio.play();
+    };
+    .notification {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        animation: fadeout 5s forwards;
+    }
     
-    </div>
+    @keyframes fadeout {
+        0% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
+    
+</style>
+<!-- AI Avatar Welcome Section -->
+<div id="ai-welcome-container">
+    <img id="ai-avatar" src="/static/images/ai-avatar.gif" alt="AI Avatar">
+    <h1 id="welcome-message">Welcome to {{ user.username }}'s Dashboard</h1>
 
-    <!-- <div class="text-center mb-4">
-        <button type="button" class="btn btn-warning">+ Enter Prospect</button>
-        <button type="button" class="btn btn-success">Change Stages</button>
-    </div> -->
 
-<!--     
-    <div class="container mt-4">
-       
+</div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h3>Customers</h3>
-                <ul class="list-group">
-                    {% for customer in customers %}
-                    <li class="list-group-item">
-                        {{ customer.name }} - {{ customer.email }}
-                    </li>
-                    {% endfor %}
-                </ul>
+{% comment %} <div class="d-flex justify-content-between align-items-center mb-4" style="background: linear-gradient(135deg, #1a1a1a, #121212); padding: 20px; border-radius: 10px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.6);">
+    <h1 style="color: #d1d1d1; text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.8); font-weight: bold;">Welcome to  Subadmin  Dashboard</h1>
+</div> {% endcomment %}
+
+<!-- Notification Area -->
+<div id="notification-area"></div>
+<div class="row mb-3">
+    <div class="col">
+        <div class="card bg-black-light">
+            <div class="card-header">
+                All Leads 
             </div>
-
-            <div class="col-md-6">
-                <h3>Sales</h3>
-                <ul class="list-group">
-                    {% for sale in sales %}
-                    <li class="list-group-item">
-                        {{ sale.product }} - {{ sale.amount }}
-                    </li>
-                    {% endfor %}
-                </ul>
+            <div class="card-body">
+                <p>Total : {{total_lead}}</p>
+                <p>New Leads Today : {{Newleads_today}}</p>
             </div>
         </div>
-    </div> -->
-
-    <div class="help-materials">
-        <h2>Help Materials</h2>
-        <button type="button" class="btn btn-outline-primary">Training Video Leads / Prospects</button>
-        <button type="button" class="btn btn-outline-primary">Enter Prospect Manually</button>
-        <button type="button" class="btn btn-outline-primary">How to create or add a prospect?</button>
-        <button type="button" class="btn btn-outline-primary">How to assign Prospects to Executive?</button>
-        <button type="button" class="btn btn-outline-primary">How to Convert a Lead to a Prospect?</button>
-        <button type="button" class="btn btn-outline-primary">How to add a Connection / New Business Contact?</button>
-        <button type="button" class="btn btn-outline-primary">Need Help</button>
     </div>
+    <div class="col">
+        <div class="card bg-black-dark">
+            <div class="card-header">
+                Tagged Leads
+            </div>
+            <div class="card-body">
+                <p>Untagged Leads : {{untage_lead}}</p>
+                <p>Tagged Leads : {{tage_lead}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-black-grey">
+            <div class="card-header">
+                New Leads
+            </div>
+            <div class="card-body">
+                <p>Last Week : {{last_week}}</p>
+                <p>This Month : {{this_month}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-black-light">
+            <div class="card-header">
+                Source Leads
+            </div>
+            <div class="card-body">
+                <p>Source Self : {{source_self}}</p>
+                <p>Source Facebook : {{source_fb}}</p>
+            </div>
+        </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Welcome Message
+        {% if request.session.welcome_message %}
+            const welcomeMessage = `Welcome to {{ user.username }}'s dashboard!`;
+            const welcomeSpeech = new SpeechSynthesisUtterance();
+            welcomeSpeech.text = welcomeMessage;
+            welcomeSpeech.lang = "en-US";
+            window.speechSynthesis.speak(welcomeSpeech);
+    
+            // Clear the session flag
+            fetch("{% url 'clear_session_flag' %}?flag=welcome_message");
+        {% endif %}
+    
+        // Goodbye Message
+        {% if request.session.bye_message %}
+            const byeMessage = `Bye Bye, {{ user.username }}!`;
+            const byeSpeech = new SpeechSynthesisUtterance();
+            byeSpeech.text = byeMessage;
+            byeSpeech.lang = "en-US";
+            window.speechSynthesis.speak(byeSpeech);
+    
+            // Clear the session flag
+            fetch("{% url 'clear_session_flag' %}?flag=bye_message");
+        {% endif %}
+    });
+    </script>
+    
 
-
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const latestLead = "{{ latest_lead.full_name|default:'' }}";
+            if (latestLead) {
+                const message = `You have a new lead: ${latestLead}`;
+                
+                const speech = new SpeechSynthesisUtterance();
+                speech.text = message;
+                speech.lang = 'en-US';
+                window.speechSynthesis.speak(speech);
+            }
+        });
+        </script>
+        
 {% endblock %}

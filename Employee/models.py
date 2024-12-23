@@ -1,12 +1,18 @@
 from django.db import models
 from crm.models import super_admin
 import uuid
-
+  # Import your head model
 
 # Create your models here.
 class EmployeeDT(models.Model):
     Employee_id = models.CharField(max_length=8, unique=True, blank=True, default=uuid.uuid4().hex[:8])
-    Employee_admin_id = models.ForeignKey(super_admin, on_delete=models.CASCADE, related_name='employees')  # Changed to ForeignKey
+    # Employee_admin_id = models.ForeignKey(super_admin, on_delete=models.CASCADE, related_name='employees')  # Changed to ForeignKey
+    # Employee_admin = models.ForeignKey(
+    #     'crm.head',  # Use 'app_name.model_name' to reference the head model in the crm app
+    #     on_delete=models.CASCADE,
+    #     related_name='employees'
+    # )
+   
     name = models.CharField(max_length=100)
     email = models.EmailField()
     password = models.CharField(max_length=50,blank=True, null=True)

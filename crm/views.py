@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Customer, Sale , super_admin
+from .models import Customer,  super_admin
 from .forms import CustomerForm, SaleForm ,LeadsForm
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import super_admin
+from .models import Lead
+from django.utils import timezone
 
 
 '''======================== Admin and Subadmin login ======================================='''
@@ -14,23 +16,21 @@ from .models import super_admin
 
 def super_admin_login(request):
     if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
-        # Authentication based on email and custom user model
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
         try:
-            super_admin_instance = super_admin.objects.get(email=email)
-            if super_admin_instance.password == password:
-                if super_admin_instance.sub_admin == True:
-                    request.session['sub_admin_id'] = super_admin_instance.super_admin_id
-                else:    
-                    request.session['super_admin_id'] = super_admin_instance.super_admin_id
-                return redirect('dashboard')  # Redirect to a dashboard or desired page after login
+            admin = super_admin.objects.get(email=email)
+            if admin.password == password:
+                request.session['super_admin_id'] = admin.super_admin_id
+                request.session['welcome_message'] = True  # Set flag for welcome message
+                return redirect('dashboard')  # Redirect to dashboard after login
             else:
                 messages.error(request, 'Invalid password.')
         except super_admin.DoesNotExist:
-            messages.error(request, 'Super Admin not found.')
-    return render(request, 'login.html')
+            messages.error(request, 'Admin not found.')
 
+    return render(request, 'login.html')
 '''======================== Admin and Subadmin logout ======================================='''
 
 
@@ -38,9 +38,11 @@ def suparadmin_logout(request):
     if 'super_admin_id' in request.session:
         subadmin_id = request.session.get('super_admin_id')
         del request.session['super_admin_id']
+        # request.session['bye_message'] = True  # Set flag for goodbye message
     elif 'sub_admin_id' in request.session: 
         subadmin_id = request.session.get('sub_admin_id')
         del request.session['sub_admin_id']   
+        # request.session['bye_message'] = True  # Set flag for goodbye message
     return redirect('super_admin_login')
 
 '''======================== dashboard ======================================='''
@@ -51,12 +53,11 @@ from datetime import date, timedelta
 def dashboard(request):
     if 'super_admin_id' in request.session:
         suparadmin_id = request.session.get('super_admin_id')
-        customers = Customer.objects.all()
-        sales = Sale.objects.all()
-        total_lead = customers.count()
-        tage_lead = Customer.objects.filter(active = True).count()
-        untage_lead = Customer.objects.filter(active = False).count()
-        untage_lead = Customer.objects.filter(active = False).count()
+        leads = Lead.objects.all()  # Ensure this variable is used consistently
+        total_lead = leads.count()
+        tage_lead = leads.filter(form__isnull=False).count()
+        untage_lead = leads.filter(form__isnull=True).count()
+
         today = timezone.now().date()
         seven_days_ago = today - timedelta(days=7)
         first_day_of_month = today.replace(day=1)
@@ -65,36 +66,36 @@ def dashboard(request):
         else:
             last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
 
-        Newleads_today = Customer.objects.filter(date_created__date=today).count()
+        # Newleads_today = leads.filter(created_time__date=timezone.now().date()).count()
+        Newleads_today = leads.filter(created_time__date=today).count()
+        last_week = leads.filter(created_time__date__gte=seven_days_ago).count()
+        this_month = leads.filter(created_time__date__range=(first_day_of_month, last_day_of_month)).count()
 
-        # 2. Last 7 days ke leads filter karna
-        last_week = Customer.objects.filter(date_created__date__gte=seven_days_ago).count()
+        source_fb = leads.filter(form__name='Facebook').count()
+        source_self = leads.filter(form__name='Self').count()
+        # Fetch the latest lead
+        latest_lead = leads.order_by('-created_time').first()
 
-        # 3. Current month ke leads filter karna
-        this_month = Customer.objects.filter(date_created__date__range=(first_day_of_month, last_day_of_month)).count()
+        return render(request, 'dashboard.html', {
+            'leads': leads,  # Ensure this matches the variable defined above
+            'total_lead': total_lead,
+            'tage_lead': tage_lead,
+            'untage_lead': untage_lead,
+            'Newleads_today': Newleads_today,
+            'last_week': last_week,
+            'this_month': this_month,
+            'source_fb': source_fb,
+            'source_self': source_self,
+            'latest_lead': latest_lead, 
+        })
 
-        source_fb = Customer.objects.filter(source="Facebook").count()
-        source_self = Customer.objects.filter(source="Self").count()
-
-        return render(request, 'dashboard.html', {'customers': customers,
-                                                   'sales': sales,
-                                                   'total_lead':total_lead,
-                                                   'tage_lead':tage_lead,
-                                                   'untage_lead':untage_lead,
-                                                   'Newleads_today':Newleads_today,
-                                                   'last_week':last_week,
-                                                   'this_month':this_month,
-                                                   'source_fb':source_fb,
-                                                   'source_self':source_self
-                                                   })
-    elif 'sub_admin_id' in request.session: 
+    elif 'sub_admin_id' in request.session:
         subadmin_id = request.session.get('sub_admin_id')
-        customers = Customer.objects.filter(admin_id = subadmin_id)
-        sales = Sale.objects.filter(admin_id = subadmin_id)
-        total_lead = customers.count()
-        tage_lead = Customer.objects.filter(active = True,admin_id = subadmin_id).count()
-        untage_lead = Customer.objects.filter(active = False,admin_id = subadmin_id).count()
-        untage_lead = Customer.objects.filter(active = False,admin_id = subadmin_id).count()
+        leads = Lead.objects.filter(form__admin_id=subadmin_id)
+        total_lead = leads.count()
+        tage_lead = leads.filter(form__isnull=False).count()
+        untage_lead = leads.filter(form__isnull=True).count()
+
         today = timezone.now().date()
         seven_days_ago = today - timedelta(days=7)
         first_day_of_month = today.replace(day=1)
@@ -103,33 +104,30 @@ def dashboard(request):
         else:
             last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
 
-        Newleads_today = Customer.objects.filter(date_created__date=today,admin_id = subadmin_id).count()
+        Newleads_today = leads.filter(created_time__date=today).count()
+        last_week = leads.filter(created_time_date_gte=seven_days_ago).count()
+        this_month = leads.filter(created_time_date_range=(first_day_of_month, last_day_of_month)).count()
 
-        # 2. Last 7 days ke leads filter karna
-        last_week = Customer.objects.filter(date_created__date__gte=seven_days_ago,admin_id = subadmin_id).count()
-
-        # 3. Current month ke leads filter karna
-        this_month = Customer.objects.filter(date_created__date__range=(first_day_of_month, last_day_of_month),admin_id = subadmin_id).count()
-
-        source_fb = Customer.objects.filter(source="Facebook",admin_id = subadmin_id).count()
-        source_self = Customer.objects.filter(source="Self",admin_id = subadmin_id).count()
-
-        return render(request, 'dashboard.html', {'customers': customers,
-                                                   'sales': sales,
-                                                   'total_lead':total_lead,
-                                                   'tage_lead':tage_lead,
-                                                   'untage_lead':untage_lead,
-                                                   'Newleads_today':Newleads_today,
-                                                   'last_week':last_week,
-                                                   'this_month':this_month,
-                                                   'source_fb':source_fb,
-                                                   'source_self':source_self
-                                                   })
+        source_fb = leads.filter(form__name='Facebook').count()
+        source_self = leads.filter(form__name='Self').count()
+        # Fetch the latest lead
+        latest_lead = leads.order_by('-created_time').first()
+        return render(request, 'dashboard.html', {
+            'leads': leads,
+            'total_lead': total_lead,
+            'tage_lead': tage_lead,
+            'untage_lead': untage_lead,
+            'Newleads_today': Newleads_today,
+            'last_week': last_week,
+            'this_month': this_month,
+            'source_fb': source_fb,
+            'source_self': source_self,
+            'latest_lead': latest_lead,
+        })
 
     else:
         messages.error(request, 'Login Required.')
         return redirect('/')
-
 '''======================== Add Leads ======================================='''
 
 
@@ -209,34 +207,34 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Customer
 
-def all_leads(request):
-    # Extract filter and pagination parameters from the request
-    filter_query = request.GET.get('filter', '')  # Filtering query
-    page_number = request.GET.get('page', 1)  # Current page number
+# def all_leads(request):
+#     # Extract filter and pagination parameters from the request
+#     filter_query = request.GET.get('filter', '')  # Filtering query
+#     page_number = request.GET.get('page', 1)  # Current page number
 
-    # Check user session and retrieve leads based on user role
-    if 'super_admin_id' in request.session:
-        leads_query = Customer.objects.all()
-    elif 'sub_admin_id' in request.session:
-        subadmin_id = request.session.get('sub_admin_id')
-        leads_query = Customer.objects.filter(admin_id=subadmin_id)
-    else:
-        messages.error(request, 'Login Required.')
-        return redirect('/')
+#     # Check user session and retrieve leads based on user role
+#     if 'super_admin_id' in request.session:
+#         leads_query = Customer.objects.all()
+#     elif 'sub_admin_id' in request.session:
+#         subadmin_id = request.session.get('sub_admin_id')
+#         leads_query = Customer.objects.filter(admin_id=subadmin_id)
+#     else:
+#         messages.error(request, 'Login Required.')
+#         return redirect('/')
 
-    # Apply filtering if a filter query is provided
-    if filter_query:
-        leads_query = leads_query.filter(name__icontains=filter_query)
+#     # Apply filtering if a filter query is provided
+#     if filter_query:
+#         leads_query = leads_query.filter(name__icontains=filter_query)
 
-    # Paginate the results
-    paginator = Paginator(leads_query, 50)  # 50 leads per page
-    leads = paginator.get_page(page_number)
+#     # Paginate the results
+#     paginator = Paginator(leads_query, 50)  # 50 leads per page
+#     leads = paginator.get_page(page_number)
 
-    # Render the template with context
-    return render(request, 'all_leads.html', {
-        'leads': leads,
-        'filter_query': filter_query,
-    })
+#     # Render the template with context
+#     return render(request, 'all_leads.html', {
+#         'leads': leads,
+#         'filter_query': filter_query,
+#     })
 
 
 '''======================== Update Leads starts ======================================='''
@@ -265,11 +263,8 @@ def update_active_status(request):
         return JsonResponse({"success": True, "message": "Customer updated successfully."})
     return JsonResponse({"success": False, "message": "Invalid request."})
 
-
 '''======================== Imports Leads ======================================='''
         
-
-
 def export_leads_to_excel(request):
     # Create a workbook and an active worksheet
     workbook = openpyxl.Workbook()
@@ -323,57 +318,7 @@ def export_leads_to_excel(request):
 
     return response
 
-
-'''======================== daAll sells to templet ======================================='''
-
-
-
-def all_sale(request):
-    
-    
-    if 'super_admin_id' in request.session:
-        suparadmin_id = request.session.get('super_admin_id')
-        sales = Sale.objects.all()
-        return render(request, 'all_sale.html', {'sales': sales})
-    
-    elif 'sub_admin_id' in request.session:
-        subadmin_id = request.session.get('sub_admin_id')
-       
-        sales = Sale.objects.filter(admin_id = subadmin_id)
-        return render(request, 'all_sale.html', {'sales': sales})
-    else:
-        messages.error(request, 'Login Required.')
-        return redirect('/') 
-
-'''======================== Add sells ======================================='''
-
-
-def add_sale(request):
-    if 'super_admin_id' in request.session:
-        suparadmin_id = request.session.get('super_admin_id')
-    elif 'sub_admin_id' in request.session:
-        suparadmin_id = request.session.get('sub_admin_id')
-    else :
-        suparadmin_id = None    
-    if request.method == 'POST':
-        form = SaleForm(request.POST)
-        if form.is_valid():
-            form.save()
-            customer = form.save(commit=False)
-           
-            customer.admin_id = suparadmin_id
-            customer.save()
-            messages.success(request, 'Sale record created successfully!')
-            return redirect('all_sale')  # Redirect to a list of sales after saving
-        else:
-            messages.error(request, 'Failed to create sale record. Please check the form.')
-    else:
-        form = SaleForm()
-    
-    return render(request, 'add_sale.html', {'form': form})
-
 '''======================== Policy & service ======================================='''
-
 
 def privacy_policy(request):
     return render(request, 'privacy_policy.html')
@@ -401,7 +346,7 @@ def employee_list(request):
         admin_id = None
     admin_instance = get_object_or_404(super_admin, super_admin_id=admin_id)
   
-    employees = EmployeeDT.objects.filter(Employee_admin_id =admin_instance )
+    employees = EmployeeDT.objects.all()
     
     return render(request, 'employee_list.html', {'employees': employees})
 
@@ -488,439 +433,584 @@ def employee_edit(request, pk):
 
 from django.shortcuts import render, redirect
 import requests
-from social_django.utils import psa
+# from social_django.utils import psa
 from django.conf import settings
 from django.contrib import messages
+# from social_django.models import UserSocialAuth
+from .models import Page,  Lead , Form
+from django.shortcuts import  get_object_or_404
+from datetime import datetime
+# from .models import Page, Lead
+import json
 
-from django.shortcuts import render, redirect
-import requests
-from social_django.utils import psa
-from django.conf import settings
-from django.contrib import messages
-from social_django.models import UserSocialAuth
-
-
-
-'''this prgent working'''
+ACCESS_TOKEN = "EAAScaXpY5GsBO7mC9bZAYUGD2XQGwiZBiLSxyJZB5Ys881peHlDsSMuFjXC9hRChfMTfqf2Rrzq8hWeaDosHxZAZANONt9xcpJ4vt9JvCaqztDVqdGEX5khjZBPGvBJxqvzQkKzFnZA1wJ3omYH7164FjMP38fpyzdZC7ZBzStNgrSZB0CmWMmienCz0kI"
 
 
-def facebook_login(request):
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import super_admin
+from crm.models import Page
+
+
+
+def fetch_pages(request):
     """
-    Handle Facebook login and retrieve access token.
-    This function ensures that even if the user has already authenticated via Facebook,
-    the connection can be re-established and the access token can be stored for future use.
+    Fetch specified pages associated with the user and save them to the database.
     """
-    print("Facebook login initiated")
-    try:
-     
-        # Use filter instead of get to handle multiple records
-        user_social_auth = request.user.social_auth.filter(provider='facebook').first()  # get the first one
-        if not user_social_auth:
-            raise ValueError("No Facebook account linked.")
-        
-        access_token = user_social_auth.extra_data['access_token']
-        print("Access token retrieved:", access_token)
+    specified_page_names = [
+        "Anvestors trading software",
+        "Finoways Forex Signals Provider",
+        "Finoways Forex Trading signal"
+    ]
 
-        # Store the access token in session for future API requests
-        request.session['facebook_access_token'] = access_token
-        print("Access token stored in session.")
-    except AttributeError:
-        print("No access token found after login")
-        messages.error(request, 'Unable to retrieve access token. Please try again.')
-        return redirect(settings.LOGIN_URL)
-    except ValueError as e:
-        print(f"Error: {e}")
-        messages.error(request, str(e))
-        return redirect(settings.LOGIN_URL)
+    # Normalize specified page names
+    normalized_page_names = [name.strip().lower() for name in specified_page_names]
 
-    # Redirect to Facebook pages view to show pages
-    return redirect('facebook_pages')
+    # Fetch all pages from the API
+    url = f"https://graph.facebook.com/v17.0/me/accounts?access_token={ACCESS_TOKEN}"
+    while url:
+        response = requests.get(url)
+        if response.status_code != 200:
+            print("Error fetching pages:", response.json())
+            messages.error(request, "Failed to fetch pages. Please check API token and permissions.")
+            return render(request, "pages.html", {"pages": []})
 
+        data = response.json()
+        for page_data in data.get("data", []):
+            page_name = page_data.get("name").strip().lower()  # Normalize fetched name
+            if page_name in normalized_page_names:
+                Page.objects.update_or_create(
+                    page_id=page_data["id"],
+                    defaults={
+                        "name": page_data.get("name").strip(),  # Save the clean name
+                        "category": page_data.get("category", ""),
+                        "access_token": page_data.get("access_token", ""),
+                    },
+                )
+                print(f"Saved Page: {page_data.get('name').strip()}")
+            else:
+                print(f"Page Not Matched: {page_data.get('name').strip()}")
 
+        # Pagination handling
+        url = data.get("paging", {}).get("next")
 
-
-def facebook_pages(request):
-    print("Fetching Facebook pages after login")
-
-    # Fetch the user's Facebook access token from session
-    access_token = request.session.get('facebook_access_token')
-    
-    if not access_token:
-        print("No access token provided")
-        messages.error(request, "No access token provided")
-        return redirect('super_admin_login')
-
-    print("Access token retrieved:", access_token)
-
-    # Fetch the pages the user manages
-    response = requests.get(
-        'https://graph.facebook.com/me/accounts',
-        params={'access_token': access_token}
-    )
-    
-    if response.status_code != 200:
-        print("Error fetching pages:", response.text)
-        messages.error(request, 'Error fetching Facebook pages.')
-        return render(request, 'error.html', {'message': 'Error fetching pages'})
-
-    pages = response.json().get('data', [])
-    
-    if not pages:
-        print("No pages found for this user")
-        return render(request, 'error.html', {'message': 'No pages found'})
-
-    # Save page access tokens in session for later use
-    pages_with_tokens = []
-    for page in pages:
-        pages_with_tokens.append({
-            'id': page['id'],
-            'name': page['name'],
-            'access_token': page['access_token']  # This is the Page Access Token
-        })
-    
-    # Store the pages with their access tokens in session
-    request.session['facebook_pages'] = pages_with_tokens
-    print("Pages fetched and stored in session:", pages_with_tokens)
-    
-    return render(request, 'select_page.html', {'pages': pages_with_tokens})
-
-
-def select_form(request, page_id):
-    print(f"Fetching forms for page {page_id}")
-
-    # Retrieve the stored pages with their access tokens from session
-    pages = request.session.get('facebook_pages', [])
-    
-    # Find the page access token for the selected page
-    page_access_token = None
-    for page in pages:
-        if page['id'] == page_id:
-            page_access_token = page['access_token']
-            break
-    
-    if not page_access_token:
-        print("No page access token found for the selected page")
-        messages.error(request, 'No access token for the selected page. Please login again.')
-        return redirect('facebook_login')
-
-    print("Page access token retrieved:", page_access_token)
-
-    # Fetch the forms from the selected page
-    response = requests.get(
-        f'https://graph.facebook.com/{page_id}/leadgen_forms',
-        params={'access_token': page_access_token}
-    )
-    
-    if response.status_code != 200:
-        print("Error fetching forms:", response.text)
-        return render(request, 'error.html', {'message': f'Error fetching forms for page {page_id}'})
-
-    forms = response.json().get('data', [])
-
-    if not forms:
-        print(f"No forms found for page {page_id}")
-        return render(request, 'error.html', {'message': f'No forms found for page {page_id}'})
-    
-    print("Forms fetched:", forms)
-    
-    return render(request, 'select_form.html', {'forms': forms, 'page_id': page_id})
-
-
-def fetch_leads(request, form_id):
-    print(f"Fetching leads for form {form_id}")
-
-    access_token = request.session.get('facebook_access_token')
-
-    if not access_token:
-        print("No access token provided")
-        messages.error(request, 'No access token found. Please login again.')
-        return redirect('facebook_login')
-
-    print("Access token retrieved:", access_token)
-
-    # Fetch leads from the selected form
-    response = requests.get(
-        f'https://graph.facebook.com/{form_id}/leads',
-        params={'access_token': access_token}
-    )
-
-    if response.status_code != 200:
-        print("Error fetching leads:", response.text)
-        return render(request, 'error.html', {'message': f'Error fetching leads for form {form_id}'})
-
-    leads = response.json().get('data', [])
-
-    if not leads:
-        print(f"No leads found for form {form_id}")
-        return render(request, 'error.html', {'message': f'No leads found for form {form_id}'})
-
-    print("Leads fetched:", leads)
-  
-    # suparadmin_id = request.session.get('super_admin_id')
-    # # Process and save leads (using Customer model)
-    # for lead in leads:
-    #     print(f"Processing lead: {lead}")
-    #     try:
-    #         full_name = lead['field_data'][0]['values'][0]
-    #         email = lead['field_data'][1]['values'][0]
-    #         phone_number = lead['field_data'][2]['values'][0]
-
-    #         Customer.objects.update_or_create(
-    #             email=email,
-    #             defaults={
-    #                 'admin_id':suparadmin_id,
-    #                 'name': full_name,
-    #                 'phone': phone_number,
-    #                 'address': '',
-    #                 'created_by': 'Facebook',
-    #             }
-    #         )
-    #     except IndexError as e:
-    #         print(f"Error processing lead: {lead}, Error: {e}")
-    #         continue
+    # Query only the specified pages
+    pages = Page.objects.filter(name__in=specified_page_names)
+    print(f"Pages for Template: {[page.name for page in pages]}")  # Debug the query result
+    return render(request, "pages.html", {"pages": pages})
 
 
 
-    if 'super_admin_id' in request.session:
-        suparadmin_id = request.session.get('super_admin_id')
-    elif 'sub_admin_id' in request.session:
-        suparadmin_id = request.session.get('sub_admin_id')
-    else:
-        suparadmin_id = None
-    # Process and save leads (using Customer model)
-    for lead in leads:
-        print(f"Processing lead: {lead}")
-        try:
-            # Map field data to a dictionary for easy access
-            field_map = {field['name']: field['values'][0] for field in lead['field_data']}
-            
-            # Get values using keys
-            lead_id = lead['id']  # Extract the lead id
-            full_name = field_map.get('FULL_NAME', 'Unknown Name')  # Default to 'Unknown Name' if not found
-            email = field_map.get('EMAIL', 'unknown@example.com')  # Default to 'unknown@example.com' if not found
-            phone_number = field_map.get('PHONE', 'Unknown Phone')  # Default to 'Unknown Phone' if not found
-           
-            
-            # Save or update customer data
-            Customer.objects.update_or_create(
-                email=email,
+def fetch_forms_for_page(request, page_id):
+    """
+    Fetch forms associated with a specific page and save them to the database.
+    """
+    page = get_object_or_404(Page, page_id=page_id)
+
+    # Fetch forms for the page
+    url = f"https://graph.facebook.com/v17.0/{page_id}/leadgen_forms?access_token={page.access_token}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        forms_data = response.json().get('data', [])
+        for form_data in forms_data:
+            Form.objects.update_or_create(
+                form_id=form_data['id'],  # Save the form_id from API
                 defaults={
-                    'admin_id': suparadmin_id,
-                    'name': full_name,
-                    'phone': phone_number,
-                    'facebook_id':lead_id,
-                    'address': '',
-                    'created_by': 'Facebook',
+                    'name': form_data.get('name', 'Unnamed Form'),
+                    'page': page,
+                    'status': form_data.get('status', 'ACTIVE'),
                 }
             )
-        except Exception as e:
-            print(f"Error processing lead: {lead}, Error: {e}")
-            continue
+        # Refresh the forms from the database
+        forms = Form.objects.filter(page=page)
+    else:
+        error_message = response.json().get('error', {}).get('message', 'Failed to fetch forms.')
+        return render(request, 'error.html', {'message': error_message})
+
+    return render(request, 'forms.html', {'forms': forms, 'page': page})
 
 
+
+from django.shortcuts import render, get_object_or_404
+from .models import Lead, Form
+
+def fetch_leads_from_db(request, form_id):
+    """
+    Fetch leads from the MySQL database for the given form ID.
+    Replace form names dynamically for the specified forms.
+    """
+    # Define the form name mappings
+    form_name_mapping = {
+        "forex11/12/2024, 16:24": "Forex Domestic Ad",
+        "Capture basic customer information 10/12/2024": "Malasia/Singapore Ad",
+        "Franchise Ad Leads-copy": "Partnership Ad",
+        "Forex signal-copy": "Gulf Forex Ad"
+    }
+
+    # Fetch the form
+    form = get_object_or_404(Form, form_id=form_id)
+
+    # Replace the form name if it exists in the mapping
+    original_name = form.name
+    form.name = form_name_mapping.get(form.name, form.name)
+
+    # Query the Lead table to fetch leads for the given form
+    leads = Lead.objects.filter(form=form).order_by('-created_time')  # Order by latest leads
+
+    # Debugging: Print leads and form name mapping
+    print(f"Fetched {len(leads)} leads for form {original_name} renamed to {form.name}")
+
+    # Pass the leads and updated form to the template
+    return render(request, 'leads.html', {'leads': leads, 'form': form})
+
+ 
+def fetch_leads_for_form(request, form_id):
+    form = get_object_or_404(Form, form_id=form_id)
+
+    # Fetch leads from Facebook API
+    url = f"https://graph.facebook.com/v17.0/{form_id}/leads?access_token={form.page.access_token}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        leads_data = response.json().get('data', [])
+        for lead_data in leads_data:
+            # Print the raw lead data for debugging
+            print("Raw Lead Data:", lead_data)
+
+            field_data = {field['name']: field['values'][0] for field in lead_data.get('field_data', [])}
+            print("Field Data Processed:", field_data)  # Debug: Check processed field data
+
+            Lead.objects.update_or_create(
+                lead_id=lead_data['id'],
+                form=form,
+                defaults={
+                    'full_name': field_data.get('full_name', 'Unknown'),
+                    'email': field_data.get('email', None),
+                    'phone_number': field_data.get('phone_number', None),
+                    'created_time': lead_data.get('created_time'),
+                    'city': field_data.get('city', None),  # Ensure this field is mapped
+                }
+            )
+
+        leads = Lead.objects.filter(form=form)
+        return render(request, 'leads.html', {'leads': leads, 'form': form})
+    else:
+        error_message = response.json().get('error', {}).get('message', 'Failed to fetch leads.')
+        return render(request, 'error.html', {'message': error_message})
+
+
+from django.http import JsonResponse
+from .tasks import fetch_leads_task
+
+def manual_fetch_leads(request):
+    """
+    Trigger manual fetch of leads.
+    """
+    fetch_leads_task.delay()  # Run asynchronously
+    return JsonResponse({"message": "Lead fetching initiated. Check logs for status."})
+
+
+from django.utils import timezone
+# from django.utils.timezone import localtime
+
+# from django.utils.timezone import localtime, now
+
+def fetch_and_save_all_leads():
+    """
+    Fetch pages, forms, and leads from Facebook API and save them to the database.
+    """
+    specified_page_names = [
+        "Anvestors trading software",
+        "Finoways Forex Signals Provider",
+        "Finoways Forex Trading signal"
+    ]
+    normalized_page_names = [name.strip().lower() for name in specified_page_names]
+
+    # Fetch all pages
+    pages_url = f"https://graph.facebook.com/v17.0/me/accounts?access_token={ACCESS_TOKEN}"
+    while pages_url:
+        pages_response = requests.get(pages_url)
+        if pages_response.status_code != 200:
+            print("Error fetching pages:", pages_response.json())
+            return
+
+        for page_data in pages_response.json().get("data", []):
+            page_name = page_data.get("name", "").strip().lower()
+            if page_name in normalized_page_names:
+                page, _ = Page.objects.update_or_create(
+                    page_id=page_data["id"],
+                    defaults={
+                        "name": page_data["name"].strip(),
+                        "category": page_data.get("category", ""),
+                        "access_token": page_data.get("access_token", ""),
+                    }
+                )
+                # Fetch forms for the matched page
+                forms_url = f"https://graph.facebook.com/v17.0/{page.page_id}/leadgen_forms?access_token={page.access_token}"
+                forms_response = requests.get(forms_url)
+                for form_data in forms_response.json().get('data', []):
+                    form, _ = Form.objects.update_or_create(
+                        form_id=form_data['id'],
+                        defaults={'name': form_data.get('name', 'Unnamed Form'), 'page': page}
+                    )
+                    # Fetch leads for the form
+                    leads_url = f"https://graph.facebook.com/v17.0/{form.form_id}/leads?access_token={page.access_token}"
+                    while leads_url:
+                        leads_response = requests.get(leads_url)
+                        if leads_response.status_code != 200:
+                            print(f"Error fetching leads: {leads_response.json()}")
+                            break
+                        for lead_data in leads_response.json().get('data', []):
+                            field_data = {field['name']: field['values'][0] for field in lead_data.get('field_data', [])}
+                            Lead.objects.update_or_create(
+                                lead_id=lead_data['id'],
+                                form=form,
+                                defaults={
+                                    'full_name': field_data.get('full_name', 'N/A'),
+                                    'email': field_data.get('email', 'N/A'),
+                                    'phone_number': field_data.get('phone_number', 'N/A'),
+                                    'city': field_data.get('city', 'N/A'),
+                                    'created_time': lead_data.get('created_time'),
+                                }
+                            )
+                        leads_url = leads_response.json().get('paging', {}).get('next')
+
+        pages_url = pages_response.json().get("paging", {}).get("next")
+
+from django.shortcuts import render
+from crm.models import Lead
+
+def all_leads(request):
+    """
+    Display all leads from the database, ordered by the latest created_time.
+    """
+    leads = Lead.objects.all().order_by('-created_time')
     return render(request, 'leads.html', {'leads': leads})
 
 
 
-
-##############################################################
-
-#################################################################
-from django.http import HttpResponseRedirect
-from django.conf import settings
-import urllib.parse
-import uuid
-
-def facebook_login2(request):
-    if 'super_admin_id' in request.session:
-        suparadmin_id = request.session.get('super_admin_id')
-        sub_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-    elif 'sub_admin_id' in request.session:
-        suparadmin_id = request.session.get('sub_admin_id')
-        sub_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-    else:
-        sub_admin = None
-    # Generate a unique state value
-    print(sub_admin.facebook_app_id)
-    print(sub_admin.facebook_app_secret)
-    state = str(uuid.uuid4())  # Using UUID for better uniqueness
- 
-    # Save the state in the session
-    request.session['state'] = state
-
-    # Facebook OAuth URL
-    base_url = 'https://www.facebook.com/v18.0/dialog/oauth'
-
-    # Parameters for Facebook OAuth
-    params = {
-        'client_id': sub_admin.facebook_app_id,
-        'redirect_uri': 'https://crm.joytilingtechnology.com/complete/facebook/',
-        'state': state,
-        'scope': 'email,public_profile,pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_ads',
-    }
-
-    # Generate the OAuth URL with query parameters
-    url = f"{base_url}?{urllib.parse.urlencode(params)}"
-    return HttpResponseRedirect(url)
-
-
-
-import requests
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from .models import UserProfile
-from django.shortcuts import redirect
-from django.conf import settings
+import json
+from .models import Lead
 
-def facebook_complete(request):
-    # Retrieve the state from session and request
-    session_state = request.session.get('state')
-    received_state = request.GET.get('state')
-    if 'super_admin_id' in request.session:
-        suparadmin_id = request.session.get('super_admin_id')
-        sub_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-        print(sub_admin)
-    elif 'sub_admin_id' in request.session:
-        suparadmin_id = request.session.get('sub_admin_id')
-        sub_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-        print(sub_admin)
-
-    else:
-        sub_admin = None
- 
-    if sub_admin == None:
-        messages.error(request, 'nor admin')
-        return redirect('/')
-    # Validate the state to prevent CSRF
-    if session_state != received_state:
-        return JsonResponse({'error': 'State parameter mismatch'}, status=400)
-
-    # Retrieve the authorization code
-    code = request.GET.get('code')
-    if not code:
-        return JsonResponse({'error': 'No code provided by Facebook'}, status=400)
-
-    # Step 1: Exchange the code for an access token
-    token_url = 'https://graph.facebook.com/v18.0/oauth/access_token'
-    params = {
-        'client_id': sub_admin.facebook_app_id,
-        'redirect_uri': 'https://crm.joytilingtechnology.com/complete/facebook/',
-        'client_secret': sub_admin.facebook_app_secret,
-        'code': code,
-    }
-    response = requests.get(token_url, params=params)
-    token_data = response.json()
-
-    if 'access_token' not in token_data:
-        return JsonResponse({'error': 'Unable to retrieve access token'}, status=400)
-
-    access_token = token_data['access_token']
-
-    # Step 2: Fetch Facebook user details using the access token
-    user_info_url = 'https://graph.facebook.com/me'
-    user_info_params = {
-        'access_token': access_token,
-        'fields': 'id,email,name',
-    }
-    user_info_response = requests.get(user_info_url, params=user_info_params)
-    user_info = user_info_response.json()
-    facebook_user_id = user_info.get('id')
-    namme = user_info.get('name')
-    email = user_info.get('email')
-    access_token = access_token 
-    print('facebook_user_id' , facebook_user_id ,f'/n access_token = {access_token}')
-    # return JsonResponse({
-    #     'id': user_info.get('id'),
-    #     'name': user_info.get('name'),
-    #     'email': user_info.get('email'),
-    #     'access_token': access_token,
-    # })
-   
-    try:
-        if 'super_admin_id' in request.session:
-            suparadmin_id = request.session.get('super_admin_id')
-            first_super_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-            user_to_assign = first_super_admin
-        elif 'sub_admin_id' in request.session:
-            suparadmin_id = request.session.get('sub_admin_id')
-            sub_admin = super_admin.objects.get(super_admin_id=suparadmin_id)
-            user_to_assign = sub_admin
-        else:
-            user_to_assign = None
-
-        if not user_to_assign:
-            print("No valid user (super_admin or sub_admin) found in session.")
-            raise ValueError("No valid user (super_admin or sub_admin) found in session.")
-           
-        # Get or create the UserProfile
-        profile, created = UserProfile.objects.get_or_create(
-            facebook_user_id=facebook_user_id,
-            defaults={
-                'user': user_to_assign,
-                'facebook_access_token': access_token,
-            }
-        )
-
-        if not created:
-            # Update the existing profile with new access token
-            profile.facebook_access_token = access_token
-            profile.save()
-
-        # Store Facebook details in session
-        request.session['facebook_user_id'] = facebook_user_id
-        request.session['facebook_access_token'] = access_token
-
-    except ValueError as e:
-        print(f"Error: {e}")
-        messages.error(request, str(e))
-        return redirect(settings.LOGIN_URL)
-
-    # Redirect to another page after successful login
-    return redirect('facebook_pages')  # Replace with your desired URL
-
-
-
-import pandas as pd
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import Customer
-
-def upload_customers(request):
-    if request.method == 'POST' and request.FILES['excel_file']:
-        excel_file = request.FILES['excel_file']
-        
-        # Get the admin ID from the session
-        if 'super_admin_id' in request.session:
-            admin_id = request.session.get('super_admin_id')
-        elif 'sub_admin_id' in request.session:
-            admin_id = request.session.get('sub_admin_id')
-        else:
-            messages.error(request, "Admin ID not found in session.")
-            return redirect('upload_customers')
-        
+@csrf_exempt
+def update_lead_status(request, lead_id):
+    if request.method == "POST":
         try:
-            # Read the Excel file
-            df = pd.read_excel(excel_file)
-            
-            # Ensure the required columns are present
-            required_columns = ['name', 'mobile', 'email', 'address']
-            if not all(col in df.columns for col in required_columns):
-                messages.error(request, f"Excel file must contain columns: {', '.join(required_columns)}")
-                return redirect('upload_customers')
-
-            # Loop through the rows and create Customer objects
-            for _, row in df.iterrows():
-                Customer.objects.create(
-                    admin_id=admin_id,
-                    name=row['name'],
-                    phone=row['mobile'],
-                    email=row['email'],
-                    address=row['address'],
-                    source = 'self'
-                )
-            
-            messages.success(request, "Customers uploaded successfully!")
+            data = json.loads(request.body)
+            status = data.get("status")
+            lead = Lead.objects.get(id=lead_id)
+            lead.status = status  # Assuming you have a 'status' field in the model
+            lead.save()
+            return JsonResponse({"success": True})
+        except Lead.DoesNotExist:
+            return JsonResponse({"error": "Lead not found"}, status=404)
         except Exception as e:
-            messages.error(request, f"Error processing the file: {e}")
-            return redirect('upload_customers')
+            return JsonResponse({"error": str(e)}, status=500)
 
-    return render(request, 'upload_customers.html')
+
+# # #========================= Notification  ========================================== 
+from django.http import JsonResponse
+from .models import Lead
+
+def get_latest_lead(request):
+    """
+    Fetch the latest lead from the Lead model and return it as JSON response.
+    """
+    try:
+        latest_lead = Lead.objects.latest('created_time')  # Fetch the latest lead based on creation time
+        data = {
+            'full_name': latest_lead.full_name,
+            'email': latest_lead.email,
+            'phone_number': latest_lead.phone_number,
+            'created_time': latest_lead.created_time.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+        return JsonResponse(data)
+    except Lead.DoesNotExist:
+        return JsonResponse({'error': 'No leads found.'}, status=404)
+
+
+
+
+from django.shortcuts import render
+from .models import Lead  # Replace with your actual model name
+
+def old_leads(request):
+    # Fetch all leads from the database
+    leads = Lead.objects.all()
+    return render(request, 'old_leads.html', {'leads': leads})
+
+from django.http import JsonResponse
+from django.utils.timezone import now
+from .models import Lead
+
+def fetch_new_leads(request):
+    """
+    Return all leads created after the last timestamp sent by the frontend.
+    """
+    last_fetched = request.GET.get('last_fetched')  # Timestamp sent from frontend
+
+    try:
+        if last_fetched:
+            new_leads = Lead.objects.filter(created_time__gt=last_fetched).order_by('created_time')
+        else:
+            new_leads = Lead.objects.all().order_by('created_time')[:10]  # Fetch latest 10 leads initially
+
+        leads_data = [
+            {
+                'id': lead.id,
+                'full_name': lead.full_name or "N/A",
+                'email': lead.email or "N/A",
+                'phone_number': lead.phone_number or "N/A",
+                'city': lead.city or "N/A",
+                'created_time': lead.created_time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for lead in new_leads
+        ]
+
+        return JsonResponse({'leads': leads_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+from django.core.cache import cache
+from django.http import JsonResponse
+
+def test_cache(request):
+    # Set a key in Redis
+    cache.set('greeting', 'Hello from Redis!', timeout=60)
+
+    # Get the key from Redis
+    greeting = cache.get('greeting')
+
+    return JsonResponse({'message': greeting})
+
+
+
+
+from django.http import JsonResponse
+
+def clear_session_flag(request):
+    flag = request.GET.get('flag')
+    if flag in request.session:
+        del request.session[flag]
+    return JsonResponse({"status": "success"})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  today = timezone.now().date()
+#         seven_days_ago = today - timedelta(days=7)
+#         first_day_of_month = today.replace(day=1)
+#         if today.month == 12:
+#             last_day_of_month = date(today.year + 1, 1, 1) - timedelta(days=1)
+#         else:
+#             last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
+
+#         Newleads_today = leads.filter(created_time__date=today).count()
+#         last_week = leads.filter(created_time__date__gte=seven_days_ago).count()
+#         this_month = leads.filter(created_time__date__range=(first_day_of_month, last_day_of_month)).count()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @login_required
+# def calls_lead_changelist(request):
+#     """
+#     Displays a list of leads with pagination and optional filtering.
+#     """
+#     leads = Lead.objects.all()  # Fetch all leads from the database
+
+#     # Filtering by page (if needed)
+#     page_id = request.GET.get('page_id')
+#     if page_id:
+#         leads = leads.filter(page__page_id=page_id)
+
+#     # Optional date range filtering
+#     from_date = request.GET.get('from_date')
+#     to_date = request.GET.get('to_date')
+#     if from_date:
+#         leads = leads.filter(created_time__date__gte=from_date)
+#     if to_date:
+#         leads = leads.filter(created_time__date__lte=to_date)
+
+#     # Pagination
+#     paginator = Paginator(leads, 25)  # Display 25 leads per page
+#     page_number = request.GET.get('page')
+#     paginated_leads = paginator.get_page(page_number)
+
+#     # Render the template
+#     return render(request, 'leads_changelist.html', {
+#         'leads': paginated_leads,
+#         'page_id': page_id,
+#         'from_date': from_date,
+#         'to_date': to_date,
+#     })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def fetch_page_forms(request, page_id):
+#     url = f"https://graph.facebook.com/v17.0/{page_id}/leadgen_forms?access_token={ACCESS_TOKEN}"
+#     response = requests.get(url)
+
+#     if response.status_code == 200:
+#         forms = response.json().get('data', [])
+#         print(f"Forms: {forms}")  # Debugging: Print available forms
+#         return render(request, 'forms.html', {'forms': forms})
+
+#     error_message = response.json().get('error', {}).get('message', "Unable to fetch forms.")
+#     print(f"Error fetching forms: {error_message}")
+#     return render(request, 'forms.html', {'error': error_message})
+
+# def fetch_forms(request, page_id):
+#     url = f"https://graph.facebook.com/v17.0/{page_id}/leadgen_forms?access_token={ACCESS_TOKEN}"
+#     response = requests.get(url)
+
+#     if response.status_code == 200:
+#         forms = response.json().get('data', [])
+#         return render(request, 'forms.html', {'forms': forms})
+
+#     error_message = response.json().get('error', {}).get('message', "Unable to fetch forms.")
+#     return render(request, 'forms.html', {'error': error_message})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def fetch_leads(request, form_id):
+#     url = f"https://graph.facebook.com/v17.0/{form_id}/leads?access_token={ACCESS_token}"
+#     response = requests.get(url)
+
+#     if response.status_code == 200:
+#         leads_data = response.json().get('data', [])
+#         processed_leads = []
+
+#         for lead in leads_data:
+#             # Extract field values from the field_data array
+#             field_data = {field['name']: field['values'][0] for field in lead.get('field_data', [])}
+#             full_name = field_data.get('full_name', 'N/A')
+#             email = field_data.get('email', 'N/A')
+#             phone_number = field_data.get('phone_number', 'N/A')
+#             city = field_data.get('city', 'N/A')
+
+#             # Save lead to the database
+#             Lead.objects.update_or_create(
+#                 lead_id=lead['id'],
+#                 defaults={
+#                     'full_name': full_name,
+#                     'email': email,
+#                     'phone_number': phone_number,
+#                     'city': city,
+#                     'created_time': lead['created_time']
+#                 }
+#             )
+
+#             # Add to processed leads for rendering
+#             processed_leads.append({
+#                 'lead_id': lead['id'],
+#                 'full_name': full_name,
+#                 'email': email,
+#                 'phone_number': phone_number,
+#                 'city': city,
+#                 'created_time': lead['created_time']
+#             })
+
+#         # Pass the processed leads to the template
+#         return render(request, 'leads.html', {'leads': processed_leads})
+
+#     error_message = response.json().get('error', {}).get('message', "Failed to fetch leads.")
+#     return render(request, 'leads.html', {'error': error_message})

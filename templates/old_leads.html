@@ -1,0 +1,47 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}All Leads{% endblock %}
+
+{% block sidebar %}
+    {% include 'sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center" style="font-weight: bold; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
+        All Leads
+    </h1>
+    <div class="row justify-content-center">
+        {% if leads %}
+            <table class="table table-dark table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Lead Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Created At</th>
+                        <th>City</th>
+                        <th>Forms</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ lead.full_name }}</td>
+                        <td>{{ lead.email }}</td>
+                        <td>{{ lead.phone_number }}</td>
+                        <td>{{ lead.created_time|date:"d M Y H:i" }}</td>
+                        <td>{{ lead.city|default:"Not Provided" }}</td>
+                        <td>{{ lead.form.name|default:"Not Available" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">No leads found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

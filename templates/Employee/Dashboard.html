@@ -3,31 +3,32 @@
 {% block title %}Dashboard Home{% endblock %}
 
 {% block content %}
-<h1>Welcome to Your Dashboard</h1>
+<h1 style="color: #f5f5f5;">Welcome to Your Dashboard</h1>
 <div class="row">
   <div class="col-md-4">
-    <div class="card text-white bg-primary mb-3">
+    <div class="card mb-3" style="background: #333; color: #f5f5f5; border: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);">
       <div class="card-body">
-        <h5 class="card-title">Card Title 1</h5>
-        <p class="card-text">Some quick example text to build on the card.</p>
+        <h5 class="card-title" style="color: #ff9a44;">All Leads</h5>
+        <p class="card-text">All Leads of you.</p>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card text-white bg-success mb-3">
+    <div class="card mb-3" style="background: #444; color: #f5f5f5; border: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);">
       <div class="card-body">
-        <h5 class="card-title">Card Title 2</h5>
-        <p class="card-text">Some quick example text to build on the card.</p>
+        <h5 class="card-title" style="color: #82f9ff;">Used Leads</h5>
+        <p class="card-text">The leads that you have used.</p>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card text-white bg-danger mb-3">
+    <div class="card mb-3" style="background: #222; color: #f5f5f5; border: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);">
       <div class="card-body">
-        <h5 class="card-title">Card Title 3</h5>
-        <p class="card-text">Some quick example text to build on the card.</p>
+        <h5 class="card-title" style="color: #ff7eb3;">Unused Leads</h5>
+        <p class="card-text">The unused leads that you need to work on.</p>
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
+

@@ -1,0 +1,180 @@
+{% extends 'head/adminbase.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'head/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* General Layout */
+    .dashboard-title {
+        font-size: 1.75rem;
+        font-weight: bold;
+        color: #e0e0e0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        margin-bottom: 20px;
+    }
+
+    /* Table Styling */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        background-color: #333; /* Black shade background */
+        color: #ffffff;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5); /* 3D shadow effect */
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #444;
+        transform: translateY(-3px); /* Lift row on hover */
+        transition: all 0.3s ease;
+    }
+
+    .table th,
+    .table td {
+        text-align: center;
+        padding: 10px;
+        font-size: 0.85rem;
+        border: 1px solid #444; /* Subtle borders */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .table th {
+        background: linear-gradient(135deg, #000, #222); /* Gradient for black shades */
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        color: #f0f0f0;
+    }
+
+    .table td {
+        background: #222; /* Darker shade for table cells */
+        color: #e0e0e0;
+        box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.5); /* 3D inset effect */
+    }
+
+    /* Highlight Today's Leads */
+    .table-success {
+        background: #2a432a !important; /* Subtle green for highlighting */
+    }
+
+    /* Checkbox Styling */
+    .form-check-input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #555; /* Dark checkbox color */
+    }
+
+    /* Buttons */
+    .btn-outline-primary {
+        color: #ffffff;
+        border-color: #555;
+        background: #222;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #444;
+        border-color: #666;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .dashboard-title {
+            font-size: 1.5rem;
+        }
+
+        .table th,
+        .table td {
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <h3 class="dashboard-title">All Leads</h3>
+
+    <!-- Filter Form -->
+    <form method="get" class="d-flex align-items-center mb-3">
+        <div class="input-group me-2">
+            <input type="date" name="filter_date" class="form-control shadow-sm" placeholder="Filter by Date" value="{{ filter_date }}">
+        </div>
+        <div class="input-group me-2">
+            <input type="text" name="filter_city" class="form-control shadow-sm" placeholder="Filter by City" value="{{ filter_city }}">
+        </div>
+        <button type="submit" class="btn btn-outline-primary shadow">Apply Filters</button>
+    </form>
+
+    {% if leads %}
+    <div class="table-responsive">
+        <table class="table table-hover text-center align-middle">
+            <thead>
+                <tr>
+                    <th>S.no</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>City</th>
+                    <th>Active</th>
+                    <th>Created Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr class="{% if lead.created_time|date:"Y-m-d" == today_date %}table-success{% endif %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ lead.full_name|default:"N/A" }}</td>
+                    <td>{{ lead.email|default:"N/A" }}</td>
+                    <td>{{ lead.phone_number|default:"N/A" }}</td>
+                    <td>{{ lead.city|default:"N/A" }}</td>
+                    <td>
+                        <input type="checkbox" class="form-check-input" {% if lead.active %}checked{% endif %}>
+                    </td>
+                    <td>{{ lead.created_time|date:"d M Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">No leads found.</div>
+    {% endif %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Handle Active Toggle
+    $('.form-check-input').on('change', function () {
+        const leadId = $(this).data('id');
+        const isActive = $(this).is(':checked');
+        $.ajax({
+            url: "{% url 'update_active_status' %}",
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            data: {
+                lead_id: leadId,
+                field: 'active',
+                value: isActive
+            },
+            success: function (response) {
+                alert(response.message);
+            },
+            error: function () {
+                alert("An error occurred while updating the status.");
+            }
+        });
+    });
+</script>
+
+{% endblock %} 

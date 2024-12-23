@@ -1,0 +1,36 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Facebook Pages</h1>
+    {% if pages %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Page Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for page in pages %}
+<tr>
+    <td>{{ page.name }}</td>
+    <td>
+        <a href="{% url 'fetch_forms_for_page' page.page_id %}">View Forms</a>
+    </td>
+</tr>
+{% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No pages available.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

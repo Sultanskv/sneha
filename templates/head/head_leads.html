@@ -1,0 +1,41 @@
+
+{% extends 'head/adminbase.html' %}
+
+{% block title %}Leads for  {{ form.name }}{% endblock %}
+
+{% block sidebar %}
+    {% include 'head/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Leads for {{ form.name }}</h1>
+
+    {% if leads %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Created Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in leads %}
+            <tr>
+                <td>{{ lead.full_name }}</td>
+                <td>{{ lead.email }}</td>
+                <td>{{ lead.phone_number }}</td>
+                <td>{{ lead.created_time|date:"d M Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        No leads found for this form.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

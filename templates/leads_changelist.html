@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lead Changelist</title>
+</head>
+<body>
+    <h1>Lead Changelist</h1>
+
+    <form method="get">
+        <label for="page_id">Page:</label>
+        <input type="text" name="page_id" id="page_id" value="{{ page_id }}">
+        
+        <label for="from_date">From Date:</label>
+        <input type="date" name="from_date" id="from_date" value="{{ from_date }}">
+        
+        <label for="to_date">To Date:</label>
+        <input type="date" name="to_date" id="to_date" value="{{ to_date }}">
+        
+        <button type="submit">Filter</button>
+    </form>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Created Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in leads %}
+                <tr>
+                    <td>{{ lead.id }}</td>
+                    <td>{{ lead.full_name }}</td>
+                    <td>{{ lead.email }}</td>
+                    <td>{{ lead.phone_number }}</td>
+                    <td>{{ lead.created_time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div>
+        {% if leads.has_previous %}
+            <a href="?page={{ leads.previous_page_number }}&page_id={{ page_id }}&from_date={{ from_date }}&to_date={{ to_date }}">Previous</a>
+        {% endif %}
+
+        <span>Page {{ leads.number }} of {{ leads.paginator.num_pages }}</span>
+
+        {% if leads.has_next %}
+            <a href="?page={{ leads.next_page_number }}&page_id={{ page_id }}&from_date={{ from_date }}&to_date={{ to_date }}">Next</a>
+        {% endif %}
+    </div>
+</body>
+</html>

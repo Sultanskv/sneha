@@ -1,0 +1,41 @@
+{% extends 'head/adminbase.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include 'head/sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Forms for {{ page.name }}</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Form Name</th>
+                {% comment %} <th>Form ID</th>
+                <th>Status</th>
+                <th>Action</th> {% endcomment %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if forms %}
+            {% for form in forms %}
+<tr>
+    <td>{{ form.name }}</td>
+    <td>
+        <a href="{% url 'head_fetch_leads_for_form' form.form_id %}">View Leads</a>
+    </td>
+</tr>
+{% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">No forms found for this page.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Your Website{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Main content padding */
+        .main-content {
+            padding: 20px;
+        }
+
+        /* Sidebar for large screens */
+        @media (min-width: 992px) {
+            .sidebar {
+                width: 200px;
+                position: fixed;
+                height: 100%;
+                background-color: #34495e;
+                padding-top: 20px;
+                transition: width 0.3s ease;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
+        }
+
+        /* Offcanvas styling for small screens */
+        .offcanvas-lg {
+            width: 200px !important;
+        }
+        .offcanvas-body {
+            background-color: #2b3e50;
+            color: white;
+            padding: 15px;
+        }
+
+        /* Toggle button margin */
+        .sidebar-toggle-btn {
+            margin: 10px;
+        }
+
+        /* Close button styling */
+        .btn-close {
+            background-color: white;
+            opacity: 0.7;
+        }
+        .btn-close:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar for mobile with toggle button -->
+<nav class="navbar navbar-light bg-light d-lg-none">
+    <div class="container-fluid">
+        <button class="btn btn-primary sidebar-toggle-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
+            <i class="bi bi-list"></i> Menu
+        </button>
+    </div>
+</nav>
+
+<!-- Sidebar for large screens and offcanvas for small screens -->
+<div class="offcanvas-lg offcanvas-start" tabindex="-1" id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
+    <div class="offcanvas-header d-lg-none">
+        <h5 class="offcanvas-title" id="offcanvasSidebarLabel">Menu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body sidebar">
+        {% block sidebar %}
+        <!-- Sidebar content -->
+      
+        {% endblock %}
+    </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="main-content">
+    {% block content %}
+    
+    {% endblock %}
+</div>
+
+<!-- Bootstrap JS (includes Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Ensure the offcanvas sidebar closes correctly
+    document.addEventListener('DOMContentLoaded', function () {
+        const offcanvasElement = document.getElementById('offcanvasSidebar');
+        const offcanvas = new bootstrap.Offcanvas(offcanvasElement);
+
+        // Close offcanvas when clicking on a link (optional)
+        const links = offcanvasElement.querySelectorAll('.nav-link');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                offcanvas.hide();
+            });
+        });
+    });
+</script>
+</body>
+</html>

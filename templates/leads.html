@@ -7,76 +7,269 @@
 {% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads Fetched</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Roboto', sans-serif;
-        }
-        h1 {
-            text-align: center;
-            color: #343a40;
-            margin-top: 30px;
-            font-weight: bold;
-        }
-        table {
-            width: 100%;
-            max-width: 900px;
-            margin: 30px auto;
-            border-collapse: collapse;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        thead {
-            background-color: #0d6efd;
-            color: white;
-        }
-        th, td {
-            padding: 15px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        tbody tr:hover {
-            background-color: #d6e4f0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Leads Fetched</h1>
-        <table class="table table-striped table-bordered">
-            <thead>
+<div class="container-fluid mt-4">
+    <h3 class="dashboard-title text-center mb-4">Leads for {{ form.name }}</h3>
+
+   <!-- Filter Section -->
+<div class="container mb-4 filter-container">
+    <form class="row g-4 align-items-center p-4 shadow-lg rounded">
+        <!-- Left Filters -->
+        <div class="col-md-6">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <input type="text" id="filterName" class="filter-input form-control" placeholder="Filter by Full Name">
+                </div>
+                <div class="col-md-12">
+                    <input type="text" id="filterEmail" class="filter-input form-control" placeholder="Filter by Email">
+                </div>
+                <div class="col-md-12">
+                    <input type="text" id="filterPhone" class="filter-input form-control" placeholder="Filter by Phone">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Filters -->
+        <div class="col-md-6">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <input type="text" id="filterCity" class="filter-input form-control" placeholder="Filter by City">
+                </div>
+                <div class="col-md-12">
+                    <input type="text" id="filterDate" class="filter-input form-control" placeholder="Filter by Created Time">
+                </div>
+                <div class="col-md-12">
+                    <input type="text" id="filterCampaign" class="filter-input form-control" placeholder="Filter by Campaign Name">
+                </div>
+            </div>
+        </div>
+
+        <!-- Centered Apply Filters Button -->
+        <div class="col-12 text-center mt-4">
+            <button type="button" class="btn filter-button" onclick="filterLeads()">Apply Filters</button>
+        </div>
+    </form>
+</div>
+
+
+  
+
+</form>
+
+
+    <!-- Table Section -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm text-center align-middle" id="leadsTable">
+            <thead class="table-dark">
                 <tr>
-                    <th>No</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
+                    <th style="width: 5%;">S.No</th>
+                    <th style="width: 10%;">Full Name</th>
+                    <th style="width: 12%;">Email</th>
+                    <th style="width: 10%;">Phone</th>
+                    <th style="width: 6%;">City</th>
+                    <th style="width: 15%;">Created Time</th>
+                    <th style="width: 17%;">Campaign Name</th>
+                    <th style="width: 8%;">Status</th>
                 </tr>
             </thead>
             <tbody>
                 {% for lead in leads %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ lead.field_data.0.values.0 }}</td>
-                        <td>{{ lead.field_data.1.values.0 }}</td>
-                        <td>{{ lead.field_data.2.values.0 }}</td>
-                    </tr>
+                <tr data-lead-id="{{ lead.id }}" class="lead-row {% if lead.status == 'Assigned' %}assigned{% endif %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td class="text-truncate">{{ lead.full_name|default:"N/A" }}</td>
+                    <td class="text-truncate">{{ lead.email|default:"N/A" }}</td>
+                    <td>{{ lead.phone_number|default:"N/A" }}</td>
+                    <td>{{ lead.city|default:"N/A" }}</td>
+                    <td>{{ lead.created_time|date:"d M Y H:i" }}</td>
+                    <td class="text-truncate">{{ lead.form.name }}</td>
+                    <td>
+                        <select class="Campaign-select Campaign-select-sm status-dropdown">
+                            <option value="Not Assigned" {% if lead.status == "Not Assigned" %}selected{% endif %}>Not Assigned</option>
+                            <option value="Assigned" {% if lead.status == "Assigned" %}selected{% endif %}>Assigned</option>
+                        </select>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No leads found.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <!-- Bootstrap JS (Optional) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+
+<!-- CSS -->
+<style>
+    /* Compact and responsive table */
+    .table {
+        font-size: 0.85rem;
+        color: #ffffff;
+        background-color: #000000;
+    }
+
+    .table th, .table td {
+        padding: 8px;
+        border: 1px solid #444;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .table th {
+        background-color: #222;
+        color: #fff;
+    }
+
+    /* Text truncation */
+    .text-truncate {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Dropdown Styling */
+    .form-select {
+        font-size: 0.8rem;
+        padding: 3px;
+    }
+
+    .lead-row.assigned {
+        background-color: #006400 !important;
+        color: #ffffff !important;
+    }
+
+    /* Adjust specific column widths */
+    th:nth-child(7), td:nth-child(7), /* Form Name */
+    th:nth-child(8), td:nth-child(8)  /* Page Name */ {
+        max-width: 180px;
+    }
+
+    th:nth-child(2), td:nth-child(2), /* Full Name */
+    th:nth-child(5), td:nth-child(5)  /* City */ {
+        max-width: 100px;
+    }
+
+    /* Responsive Table */
+    @media (max-width: 1200px) {
+        .table-responsive {
+            overflow-x: auto;
+        }
+    }
+</style>
+<style>
+    /* Filter container styling */
+    .filter-container {
+        background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+        box-shadow: 3px 3px 8px #d6d6d6, -3px -3px 8px #ffffff;
+    }
+
+    /* Filter input styling */
+    .filter-input {
+        border: 2px solid #ced4da;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
+        box-shadow: inset 2px 2px 5px #d1d1d1, inset -2px -2px 5px #ffffff;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #6c757d;
+        box-shadow: 0px 0px 10px #6c757d;
+    }
+
+    /* Apply Filters Button */
+    .filter-button {
+        background-color: #6c757d;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        box-shadow: 2px 2px 8px #999, -2px -2px 8px #fff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .filter-button:hover {
+        background-color: #5a6268;
+        transform: scale(1.05);
+        box-shadow: 2px 2px 12px #888;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .col-md-6 {
+            width: 100%;
+        }
+
+        .filter-button {
+            width: 100%;
+            margin-top: 15px;
+        }
+    }
+</style>
+
+
+
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".status-dropdown").forEach(dropdown => {
+            updateDropdownColor(dropdown);
+            dropdown.addEventListener("change", function () {
+                const row = this.closest("tr");
+                if (this.value === "Assigned") {
+                    row.classList.add("assigned");
+                } else {
+                    row.classList.remove("assigned");
+                }
+                updateDropdownColor(this);
+            });
+        });
+    });
+
+    function updateDropdownColor(dropdown) {
+        if (dropdown.value === "Assigned") {
+            dropdown.style.backgroundColor = "#006400";
+            dropdown.style.color = "#ffffff";
+        } else {
+            dropdown.style.backgroundColor = "#ffffff";
+            dropdown.style.color = "#000000";
+        }
+    }
+
+    function filterLeads() {
+        const filters = {
+            
+            name: document.getElementById('filterName').value.toLowerCase(),
+            email: document.getElementById('filterEmail').value.toLowerCase(),
+            phone: document.getElementById('filterPhone').value.toLowerCase(),
+            city: document.getElementById('filterCity').value.toLowerCase(),
+            date: document.getElementById('filterDate').value.toLowerCase(),
+            form: document.getElementById('filterCampaign').value.toLowerCase(),
+            status: document.getElementById('filterStatus').value.toLowerCase()
+        };
+    
+        const rows = document.querySelectorAll('.lead-row');
+    
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const show = (
+                (!filters.sNo || cells[0].innerText.toLowerCase().includes(filters.sNo)) &&
+                (!filters.name || cells[1].innerText.toLowerCase().includes(filters.name)) &&
+                (!filters.email || cells[2].innerText.toLowerCase().includes(filters.email)) &&
+                (!filters.phone || cells[3].innerText.toLowerCase().includes(filters.phone)) &&
+                (!filters.city || cells[4].innerText.toLowerCase().includes(filters.city)) &&
+                (!filters.date || cells[5].innerText.toLowerCase().includes(filters.date)) &&
+                (!filters.Campaign || cells[6].innerText.toLowerCase().includes(filters.Campaign)) &&
+                (!filters.status || cells[7].innerText.toLowerCase().includes(filters.status))
+            );
+    
+            row.style.display = show ? "" : "none";
+        });
+    }
+    
+</script>
 {% endblock %}
